@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BCh.KTC.TttGenerator.Config {
-  public static class GeneratorConfig {
+  internal static class GeneratorConfig {
 
     public static string GetGidDbConnectionString() {
       return ConfigurationManager.ConnectionStrings["gidDb"].ConnectionString;
@@ -30,6 +30,9 @@ namespace BCh.KTC.TttGenerator.Config {
       return int.Parse(ConfigurationManager.AppSettings["prevAckTime"]);
     }
 
+    public static int GetAdvanceCommandExecutionPeriod() {
+      return int.Parse(ConfigurationManager.AppSettings["advanceCmdExecPeriod"]);
+    }
 
     public static Dictionary<string, ControlledStation> GetControlledStations() {
       var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -55,5 +58,6 @@ namespace BCh.KTC.TttGenerator.Config {
 
       return controlledStations;
     }
+
   }
 }

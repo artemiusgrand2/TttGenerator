@@ -35,7 +35,8 @@ namespace BCh.KTC.TttGenerator {
       var trainHeadersRepo = new TrainHeadersRepository(_gidDbConString);
       _engine = new GeneratorEngine(controlledStations, plannedRepo, taskRepo, trainHeadersRepo,
         GeneratorConfig.GetReserveTime(),
-        GeneratorConfig.GetPrevAckTime());
+        GeneratorConfig.GetPrevAckTime(),
+        GeneratorConfig.GetAdvanceCommandExecutionPeriod());
 
       int cycleTime = GeneratorConfig.GetCycleTime();
       if (cycleTime < 10) {

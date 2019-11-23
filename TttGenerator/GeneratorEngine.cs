@@ -16,6 +16,7 @@ namespace BCh.KTC.TttGenerator {
     private readonly ITrainHeadersRepository _trainHeadersRepo;
     private readonly int _reserveTime; // 1 - 2 minutes
     private readonly TimeSpan _prevAckPeriod; // 15 - 20 minutes
+    private readonly int _advanceCmdExePeriod;
 
 
     public GeneratorEngine(Dictionary<string, ControlledStation> controlledStations,
@@ -23,13 +24,15 @@ namespace BCh.KTC.TttGenerator {
         ITtTaskRepository taskRepo,
         ITrainHeadersRepository trainHeadersRepo,
         int reserveTime,
-        int prevAckPeriod) {
+        int prevAckPeriod,
+        int advanceCmdExePeriod) {
       _controlledStations = controlledStations;
       _plannedRepo = plannedRepo;
       _taskRepo = taskRepo;
       _trainHeadersRepo = trainHeadersRepo;
       _reserveTime = reserveTime;
       _prevAckPeriod = new TimeSpan(0, prevAckPeriod, 0);
+      _advanceCmdExePeriod = advanceCmdExePeriod;
     }
 
 
@@ -76,26 +79,27 @@ namespace BCh.KTC.TttGenerator {
         return;
       }
 
-      // 1 time constraints
-      bool passed = HaveTimeConstraintsBeenPassed(thread, index, currentTime);
-      if (!passed) return;
-
       // 2 self dependency constraints
-      passed = HaveSelfDependenciesBeenPassed(thread, index, currentTime);
+      bool passed = HaveSelfDependenciesBeenPassed(thread, index, currentTime);
       if (!passed) return;
 
       // 3 other train dependencies constraints
       passed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index);
       if (!passed) return;
 
-      TtTaskRecord task = CreateTask(thread[index]);
+      // 1 time constraints
+      DateTime executionTime;
+      passed = HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+      if (!passed) return;
+
+      TtTaskRecord task = CreateTask(thread[index], executionTime);
       _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteEndObjectType}:{task.RouteEndObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
       _taskRepo.InsertTtTask(task);
       _logger.Info("The task has been written to the database.");
 
     }
 
-    private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord) {
+    private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, DateTime executionTime) {
       var task = new TtTaskRecord();
       task.Station = plannedTrainRecord.Station;
       // ?!!! there might be situations of moving from a track to another track
@@ -110,7 +114,8 @@ namespace BCh.KTC.TttGenerator {
         task.RouteEndObjectType = 5;
         task.RouteEndObjectName = plannedTrainRecord.Ndo;
       }
-      task.CreationTime = task.ExecutionTime = DateTime.Now;
+      task.CreationTime = DateTime.Now;
+      task.ExecutionTime = executionTime;
       task.PlannedEventReference = plannedTrainRecord.RecId;
       task.TrainNumber = _trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId);
       return task;
@@ -178,7 +183,7 @@ namespace BCh.KTC.TttGenerator {
     }
 
 
-    private bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] thread, int index, DateTime currentTime) {
+    private bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] thread, int index, DateTime currentTime, out DateTime executionTime) {
       int delta = 0;
       if (!_controlledStations.ContainsKey(thread[index].Station)) {
         _logger.Error($"Configuration for station {thread[index].Station} not found!");
@@ -203,7 +208,9 @@ namespace BCh.KTC.TttGenerator {
           delta = CalculateDefaultDelta(thread, index);
         }
       }
-      return thread[index].PlannedTime.AddMinutes(-delta) < currentTime;
+
+      executionTime = thread[index].PlannedTime.AddMinutes(-delta);
+      return executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
     }
 
 
