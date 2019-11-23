@@ -93,7 +93,7 @@ namespace BCh.KTC.TttGenerator {
       if (!passed) return;
 
       TtTaskRecord task = CreateTask(thread[index], executionTime);
-      _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteEndObjectType}:{task.RouteEndObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
+      _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
       _taskRepo.InsertTtTask(task);
       _logger.Info("The task has been written to the database.");
 
