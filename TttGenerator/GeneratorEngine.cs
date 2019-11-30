@@ -84,7 +84,8 @@ namespace BCh.KTC.TttGenerator {
       if (!passed) return;
 
       // 3 other train dependencies constraints
-      passed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index);
+      int dependencyEventReference;
+      passed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference);
       if (!passed) return;
 
       // 1 time constraints
@@ -92,14 +93,16 @@ namespace BCh.KTC.TttGenerator {
       passed = HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
       if (!passed) return;
 
-      TtTaskRecord task = CreateTask(thread[index], executionTime);
+      TtTaskRecord task = CreateTask(thread[index], dependencyEventReference, executionTime);
       _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
       _taskRepo.InsertTtTask(task);
       _logger.Info("The task has been written to the database.");
 
     }
 
-    private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, DateTime executionTime) {
+    private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord,
+        int dependecyEventReference,
+        DateTime executionTime) {
       var task = new TtTaskRecord();
       task.Station = plannedTrainRecord.Station;
       // ?!!! there might be situations of moving from a track to another track
@@ -117,12 +120,14 @@ namespace BCh.KTC.TttGenerator {
       task.CreationTime = DateTime.Now;
       task.ExecutionTime = executionTime;
       task.PlannedEventReference = plannedTrainRecord.RecId;
+      task.DependencyEventReference = dependecyEventReference;
       task.TrainNumber = _trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId);
       return task;
     }
 
     private bool HaveOtherTrainDependenciesBeenPasssed(List<PlannedTrainRecord[]> allThreads,
-        PlannedTrainRecord[] thread, int index) {
+        PlannedTrainRecord[] thread, int index, out int dependencyEventReference) {
+      dependencyEventReference = -1;
       PlannedTrainRecord previousEvent = null;
       foreach (PlannedTrainRecord[] aThread in allThreads) {
         if (aThread == thread) continue;
@@ -156,6 +161,7 @@ namespace BCh.KTC.TttGenerator {
       if (previousEvent == null) {
         return true;
       } else if (previousEvent.AckEventFlag != -1) {
+        dependencyEventReference = previousEvent.RecId;
         return true;
       }
       return false;
