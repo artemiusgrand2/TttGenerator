@@ -39,7 +39,7 @@ namespace BCh.KTC.TttDal {
     + "    LNKE_REC_IDN, FL_DEF"
     + "    FROM TGRAPHICPL"
 //    + "    WHERE EV_CNFM IS NULL"
-    + "    ORDER BY TRAIN_IDN, EV_TIME";
+    + "    ORDER BY TRAIN_IDN, EV_TIME_P";
 
 
     private readonly string _conString;

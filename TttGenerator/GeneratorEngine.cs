@@ -148,8 +148,8 @@ namespace BCh.KTC.TttGenerator {
             } else if (aThread[i].PlannedTime > previousEvent.PlannedTime) {
               previousEvent = aThread[i];
             }
+            break;
           }
-          break;
         }
       }
 
