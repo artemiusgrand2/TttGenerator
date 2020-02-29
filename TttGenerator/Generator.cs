@@ -29,14 +29,16 @@ namespace BCh.KTC.TttGenerator {
       _logger.Info($"Configured GidDb conString: {_gidDbConString}");
 
       var controlledStations = GeneratorConfig.GetControlledStations();
-
       var plannedRepo = new PlannedThreadsRepository(_gidDbConString);
       var taskRepo = new TtTaskRepository(_gidDbConString);
       var trainHeadersRepo = new TrainHeadersRepository(_gidDbConString);
-      _engine = new GeneratorEngine(controlledStations, plannedRepo, taskRepo, trainHeadersRepo,
+      var timeConstraintCalculator = new TimeConstraintCalculator(controlledStations,
         GeneratorConfig.GetReserveTime(),
-        GeneratorConfig.GetPrevAckTime(),
         GeneratorConfig.GetAdvanceCommandExecutionPeriod());
+      _engine = new GeneratorEngine(timeConstraintCalculator,
+        controlledStations,
+        plannedRepo, taskRepo, trainHeadersRepo,
+        GeneratorConfig.GetPrevAckTime());
 
       int cycleTime = GeneratorConfig.GetCycleTime();
       if (cycleTime < 10) {
