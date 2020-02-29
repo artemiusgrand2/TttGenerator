@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TttEntities", "TttEntities\TttEntities.csproj", "{92233C00-ACA7-47C7-8E85-4EE3E6E4EC13}"
 EndProject
@@ -24,6 +24,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TttGeneratorTestHarness", "Tests\TttGeneratorTestHarness\TttGeneratorTestHarness.csproj", "{8B8D16C3-3F79-47BF-84A4-078E7ECC4C0F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3TGeneratorService", "3TGeneratorService\3TGeneratorService.csproj", "{AF99AD76-B56C-443B-A0DF-70D5D1CA79E1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{C4F3E102-6A7C-4588-8D11-74658898C13E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TttGenerator.Tests", "UnitTests\TttGenerator.Tests\TttGenerator.Tests.csproj", "{1CBB6647-6E0F-4097-88DE-606744A0676C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +75,10 @@ Global
 		{AF99AD76-B56C-443B-A0DF-70D5D1CA79E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AF99AD76-B56C-443B-A0DF-70D5D1CA79E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AF99AD76-B56C-443B-A0DF-70D5D1CA79E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CBB6647-6E0F-4097-88DE-606744A0676C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CBB6647-6E0F-4097-88DE-606744A0676C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CBB6647-6E0F-4097-88DE-606744A0676C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CBB6647-6E0F-4097-88DE-606744A0676C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +88,7 @@ Global
 		{5D7D1BFD-87D1-4B48-A45A-748CCB4A08F2} = {05D9173E-49E8-435E-ACF9-81DA7D72DF5B}
 		{D4249DC4-D6C8-44D9-9F1C-8A180E08C7CB} = {05D9173E-49E8-435E-ACF9-81DA7D72DF5B}
 		{8B8D16C3-3F79-47BF-84A4-078E7ECC4C0F} = {05D9173E-49E8-435E-ACF9-81DA7D72DF5B}
+		{1CBB6647-6E0F-4097-88DE-606744A0676C} = {C4F3E102-6A7C-4588-8D11-74658898C13E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {23ADB26F-3043-4886-BCCE-85DFFE2ECCE1}

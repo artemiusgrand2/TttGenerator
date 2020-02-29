@@ -13,14 +13,15 @@ namespace BCh.KTC.TttGenerator {
     private readonly int _advanceCmdExePeriod;
 
     public TimeConstraintCalculator(Dictionary<string, ControlledStation> controlledStations,
-      int reserveTime,
-      int advanceCmdExePeriod) {
+        int reserveTime,
+        int advanceCmdExePeriod) {
       _controlledStations = controlledStations;
       _reserveTime = reserveTime;
       _advanceCmdExePeriod = advanceCmdExePeriod;
     }
 
-    public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads, int index, DateTime currentTime, out DateTime executionTime) {
+    public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
+        int index, DateTime currentTime, out DateTime executionTime) {
       int delta = 0;
       if (!_controlledStations.ContainsKey(threads[index].Station)) {
         _logger.Error($"Configuration for station {threads[index].Station} not found!");
@@ -81,6 +82,7 @@ namespace BCh.KTC.TttGenerator {
             break;
         }
       }
+      _logger.Warn($"No time record is found for {station} and interval tyupe: {intervalType}");
       return 0;
     }
 
