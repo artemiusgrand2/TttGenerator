@@ -62,12 +62,16 @@ namespace BCh.KTC.TttGenerator {
 
     private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] threads, int index, List<TtTaskRecord> tasks, DateTime currentTime) {
       // -1 checking whether the station is controlled
-      if (!_controlledStations.ContainsKey(threads[index].Station)) return;
+      if (!_controlledStations.ContainsKey(threads[index].Station)) {
+        _logger.Debug("Not processing - station not controlled. " + threads[index].ToString());
+        return;
+      }
 
       // 0 checking already issued tasks
       var existingTask = FindIssuedTask(threads[index].RecId, tasks);
       if (existingTask != null) {
         if (existingTask.SentFlag != 4) {
+          _logger.Debug("Not processing -0- command already issued. " + threads[index].ToString());
           return;
         }
         if (++index < threads.Length) {
@@ -76,19 +80,28 @@ namespace BCh.KTC.TttGenerator {
         return;
       }
 
-      // 2 self dependency constraints
+      // 1 self dependency constraints
       bool passed = HaveSelfDependenciesBeenPassed(threads, index, currentTime);
-      if (!passed) return;
+      if (!passed) {
+        _logger.Debug("Not processing -1- self-dependecy not passed. " + threads[index].ToString());
+        return;
+      }
 
-      // 3 other train dependencies constraints
+      // 2 other train dependencies constraints
       int dependencyEventReference;
       passed = HaveOtherTrainDependenciesBeenPasssed(allThreads, threads, index, out dependencyEventReference);
-      if (!passed) return;
+      if (!passed) {
+        _logger.Debug("Not processing -2- other train dependecies not passed. " + threads[index].ToString());
+        return;
+      }
 
-      // 1 time constraints
+      // 3 time constraints
       DateTime executionTime;
       passed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(threads, index, currentTime, out executionTime);
-      if (!passed) return;
+      if (!passed) {
+        _logger.Debug("Not processing -3- time constraints not passed. " + threads[index].ToString());
+        return;
+      }
 
       TtTaskRecord task = CreateTask(threads[index], dependencyEventReference, executionTime);
       _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");

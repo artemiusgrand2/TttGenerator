@@ -16,5 +16,9 @@ namespace BCh.KTC.TttEntities
     public int AckEventFlag { get; set; } // ev_cnfm: 2 - the event has been acknoledged
     public int PlannedEventReference { get; set; } // lnke_rec_idn
     public int AutopilotState { get; set; } // fl_def
+
+    public override string ToString() {
+      return string.Format($"{TrainId} st:{Station} a:{Axis} ndo:{Ndo} pt:{PlannedTime.ToShortTimeString()}");
+    }
   }
 }
