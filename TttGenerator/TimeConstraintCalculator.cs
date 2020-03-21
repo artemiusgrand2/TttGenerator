@@ -34,7 +34,7 @@ namespace BCh.KTC.TttGenerator {
             + GetConfiguredTimeInterval(station, 5, threads[index]);
         } else { // departure
           if (index != 0) {
-            var diff = threads[index].PlannedTime - threads[index - 1].PlannedTime;
+            var diff = threads[index].ForecastTime - threads[index - 1].ForecastTime;
             delta = (diff > new TimeSpan(0, 10, 0))
               ? GetConfiguredTimeInterval(station, 3, threads[index]) + _reserveTime
               : GetConfiguredTimeInterval(station, 2, threads[index]) + _reserveTime;
@@ -46,7 +46,7 @@ namespace BCh.KTC.TttGenerator {
           delta = CalculateDefaultDelta(threads, index);
         }
       }
-      executionTime = threads[index].PlannedTime.AddMinutes(-delta);
+      executionTime = threads[index].ForecastTime.AddMinutes(-delta);
       return executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
     }
 
@@ -95,7 +95,7 @@ namespace BCh.KTC.TttGenerator {
         if (index == 0) {
           delta = 2 + _reserveTime;
         } else {
-          var diff = thread[index].PlannedTime - thread[index - 1].PlannedTime;
+          var diff = thread[index].ForecastTime - thread[index - 1].ForecastTime;
           delta = (diff > new TimeSpan(0, 10, 0))
             ? 2 + _reserveTime
             : 1 + _reserveTime;
