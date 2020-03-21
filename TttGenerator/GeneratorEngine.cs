@@ -182,14 +182,14 @@ namespace BCh.KTC.TttGenerator {
         int index, DateTime currentTime) {
       int i = index;
       while (--i >= 0) {
-        if (thread[index].PlannedTime - thread[i].PlannedTime < _prevAckPeriod) {
+        if (thread[index].ForecastTime - thread[i].ForecastTime < _prevAckPeriod) {
           if (thread[i].AckEventFlag != -1) {
             return true;
           }
         } else {
           if (index - i == 1
               && thread[i].AckEventFlag != -1
-              && thread[index].PlannedTime - currentTime < _prevAckPeriod) {
+              && thread[index].ForecastTime - currentTime < _prevAckPeriod) {
             return true;
           }
           return false;

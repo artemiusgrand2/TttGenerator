@@ -82,7 +82,7 @@ namespace BCh.KTC.TttGenerator {
             break;
         }
       }
-      _logger.Warn($"No time record is found for {station} and interval tyupe: {intervalType}");
+      _logger.Warn($"No time record is found for {station} and interval type: {intervalType}");
       return 0;
     }
 
