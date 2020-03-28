@@ -41,7 +41,7 @@ namespace BCh.KTC.PlExBinder {
     }
 
     private void ExecuteDeferredTasks(DateTime executionTime) {
-      _deferredTaskStorage.CleanUpOldTask(DateTime.Now.AddMinutes(-_config.DeferredTimeLifespan));
+      _deferredTaskStorage.CleanUpOldTask(executionTime.AddMinutes(-_config.DeferredTimeLifespan));
       CleanUpBoundTasks();
 
       // execution itself
