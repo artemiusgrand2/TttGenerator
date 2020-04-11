@@ -1,11 +1,7 @@
 ﻿using BCh.KTC.TttGenerator.Config;
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TttConfigHarness {
   class Program {
@@ -16,10 +12,14 @@ namespace TttConfigHarness {
         EngineSection engineSection = new EngineSection();
         var st1 = new ControlledStationElement();
         st1.Id = "te123456";
+        st1.AllowGeneratingNotCfmArrival = true;
+        st1.AllowGeneratingNotCfmDeparture = true;
         var col = new ControlledStationCollection();
         col.Add(st1);
         st1 = new ControlledStationElement();
         st1.Id = "te654321";
+        st1.AllowGeneratingNotCfmArrival = false;
+        st1.AllowGeneratingNotCfmDeparture = false;
         col.Add(st1);
         engineSection.ControlledStations = col;
 

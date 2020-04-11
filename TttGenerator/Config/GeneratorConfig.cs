@@ -1,11 +1,7 @@
 ﻿using BCh.KTC.TttDal;
 using BCh.KTC.TttEntities;
-using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BCh.KTC.TttGenerator.Config {
   internal static class GeneratorConfig {
@@ -37,15 +33,11 @@ namespace BCh.KTC.TttGenerator.Config {
     public static Dictionary<string, ControlledStation> GetControlledStations() {
       var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
       var engineSection = config.GetSection("engine") as EngineSection;
-      var controlledStationCodes = new HashSet<string>();
-      foreach (ControlledStationElement station in engineSection.ControlledStations) {
-        controlledStationCodes.Add(station.Id);
-      }
 
       var controlledStations = new Dictionary<string, ControlledStation>();
-      foreach (string stationCode in controlledStationCodes) {
-        var controlledStation = new ControlledStation(stationCode);
-        controlledStations[stationCode] = controlledStation;
+      foreach (ControlledStationElement station in engineSection.ControlledStations) {
+        var controlledStation = new ControlledStation(station.Id, station.AllowGeneratingNotCfmArrival, station.AllowGeneratingNotCfmDeparture);
+        controlledStations[station.Id] = controlledStation;
       }
 
       var configRepo = new ConfigRepository(GetGidCnfConnectionString());

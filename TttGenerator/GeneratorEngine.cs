@@ -60,54 +60,99 @@ namespace BCh.KTC.TttGenerator {
     }
 
 
-    private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] threads, int index, List<TtTaskRecord> tasks, DateTime currentTime) {
-      // -1 checking whether the station is controlled
-      if (!_controlledStations.ContainsKey(threads[index].Station)) {
-        _logger.Debug("Not processing - station not controlled. " + threads[index].ToString());
+    private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime) {
+      // -2 checking whether the station is controlled
+      if (!_controlledStations.ContainsKey(thread[index].Station)) {
+        //_logger.Debug("Not processing - station not controlled. " + threads[index].ToString());
+        if (++index < thread.Length) {
+          ProcessThread(allThreads, thread, index, tasks, currentTime);
+        }
         return;
       }
 
-      // 0 checking already issued tasks
-      var existingTask = FindIssuedTask(threads[index].RecId, tasks);
+      // -1 checking already issued tasks
+      var existingTask = FindIssuedTask(thread[index].RecId, tasks);
       if (existingTask != null) {
         if (existingTask.SentFlag != 4) {
-          _logger.Debug("Not processing -0- command already issued. " + threads[index].ToString());
+          _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString());
           return;
         }
-        if (++index < threads.Length) {
-          ProcessThread(allThreads, threads, index, tasks, currentTime);
+        if (++index < thread.Length) {
+          ProcessThread(allThreads, thread, index, tasks, currentTime);
         }
         return;
       }
 
-      // 1 self dependency constraints
-      bool passed = HaveSelfDependenciesBeenPassed(threads, index, currentTime);
-      if (!passed) {
-        _logger.Debug("Not processing -1- self-dependecy not passed. " + threads[index].ToString());
-        return;
-      }
+      // 0 (4)- is the thread identified (bound; are there any ack events)
+      DateTime lastAckEventOrBeginning;
+      bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning);
 
-      // 2 other train dependencies constraints
-      int dependencyEventReference;
-      passed = HaveOtherTrainDependenciesBeenPasssed(allThreads, threads, index, out dependencyEventReference);
-      if (!passed) {
-        _logger.Debug("Not processing -2- other train dependecies not passed. " + threads[index].ToString());
-        return;
+      // 1.1 has prev task been executed?
+      bool has11PrevTaskBeenExecuted = false;
+      if (index > 0) {
+        var prevTask = FindIssuedTask(thread[index - 1].RecId, tasks);
+        if (prevTask != null && prevTask.SentFlag == 4) {
+          has11PrevTaskBeenExecuted = true;
+        }
       }
+      // 1.2 self dependency constraints - has prev event been executed?
+      bool has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index);
 
-      // 3 time constraints
+      // 2 time constraints
       DateTime executionTime;
-      passed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(threads, index, currentTime, out executionTime);
-      if (!passed) {
-        _logger.Debug("Not processing -3- time constraints not passed. " + threads[index].ToString());
+      bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+
+      if (lastAckEventOrBeginning + _prevAckPeriod < executionTime) {
         return;
       }
 
-      TtTaskRecord task = CreateTask(threads[index], dependencyEventReference, executionTime);
-      _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
-      _taskRepo.InsertTtTask(task);
-      _logger.Info("The task has been written to the database.");
 
+      // 3 other train dependencies constraints
+      int dependencyEventReference;
+      bool has3OtherTrainDependenciesPassed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference);
+
+      // 6 is task generation allowed for this station / event (arr, dep)
+      bool is6TaskGenAllowedForStationEvent = IsTaskGenAllowedForStationEvent(thread, index);
+
+      if ((has11PrevTaskBeenExecuted || has12PrevBeenEventExecuted)
+          && has2TimeConstraintsPassed
+          && has3OtherTrainDependenciesPassed
+          && are4ThereAnyAckEvents
+          || (has2TimeConstraintsPassed
+              && has3OtherTrainDependenciesPassed
+              && is6TaskGenAllowedForStationEvent)) {
+
+        TtTaskRecord task = CreateTask(thread[index], dependencyEventReference, executionTime);
+        _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
+        _taskRepo.InsertTtTask(task);
+        _logger.Info("The task has been written to the database.");
+      }
+    }
+
+    private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning) {
+      lastAckEventOrBeginning = new DateTime();
+      for (int i = thread.Length - 1; i >= 0; --i) {
+        lastAckEventOrBeginning = thread[i].ForecastTime;
+        if (thread[i].AckEventFlag == 2) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private bool IsTaskGenAllowedForStationEvent(PlannedTrainRecord[] threads, int index) {
+      if (!_controlledStations.ContainsKey(threads[index].Station)) {
+        return false;
+      }
+      // 3 - depart
+      if (threads[index].EventType == 3) {
+        return _controlledStations[threads[index].Station].AllowGeneratingNotCfmDeparture;
+      }
+      return _controlledStations[threads[index].Station].AllowGeneratingNotCfmArrival;
+    }
+
+    private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index) {
+      return threads[index].ForecastTime - threads[0].ForecastTime < _prevAckPeriod;
     }
 
     private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord,
@@ -178,8 +223,7 @@ namespace BCh.KTC.TttGenerator {
     }
 
 
-    private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread,
-        int index, DateTime currentTime) {
+    private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index) {
       int i = index;
       while (--i >= 0) {
         if (thread[index].ForecastTime - thread[i].ForecastTime < _prevAckPeriod) {
@@ -187,16 +231,30 @@ namespace BCh.KTC.TttGenerator {
             return true;
           }
         } else {
-          if (index - i == 1
-              && thread[i].AckEventFlag != -1
-              && thread[index].ForecastTime - currentTime < _prevAckPeriod) {
-            return true;
-          }
-          return false;
+          break;
         }
       }
-      return true;
+      return false;
     }
+
+    //private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, DateTime currentTime) {
+    //  int i = index;
+    //  while (--i >= 0) {
+    //    if (thread[index].ForecastTime - thread[i].ForecastTime < _prevAckPeriod) {
+    //      if (thread[i].AckEventFlag != -1) {
+    //        return true;
+    //      }
+    //    } else {
+    //      if (index - i == 1
+    //          && thread[i].AckEventFlag != -1
+    //          && thread[index].ForecastTime - currentTime < _prevAckPeriod) {
+    //        return true;
+    //      }
+    //      return false;
+    //    }
+    //  }
+    //  return true;
+    //}
 
     private TtTaskRecord FindIssuedTask(int recId, List<TtTaskRecord> tasks) {
       foreach (var task in tasks) {

@@ -56,6 +56,7 @@
     <Compile Include="TimeConstraintCalculator.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="docs\rules.txt" />
     <Content Include="log4netTttGen.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>

@@ -1,2 +1,3 @@
 ﻿1.0.2.0 - Switched from PlannedTime (ev_time_p) to ForecastTime (ev_time) only in Self Dependency check (1).
 1.0.3.0 - Switched from PlannedTime (ev_time_p) to ForecastTime (ev_time) in TimeConstraintCalculator check (3).
+1.0.4.0 - Re-written the algorithm according to rules.txt.
