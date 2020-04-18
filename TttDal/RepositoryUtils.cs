@@ -7,7 +7,7 @@ namespace BCh.KTC.TttDal {
       if (dataReader.IsDBNull(columnIndex)) {
         return string.Empty;
       }
-      return dataReader.GetString(columnIndex);
+      return dataReader.GetString(columnIndex).TrimEnd();
     }
 
     public static int GetInt16Safely(this IDataReader dataReader, int columnIndex) {
@@ -17,12 +17,27 @@ namespace BCh.KTC.TttDal {
       return dataReader.GetInt16(columnIndex);
     }
 
+    public static int GetInt16SafelyOr0(this IDataReader dataReader, int columnIndex) {
+      if (dataReader.IsDBNull(columnIndex)) {
+        return 0;
+      }
+      return dataReader.GetInt16(columnIndex);
+    }
+
+
     public static int GetInt32Safely(this IDataReader dataReader, int columnIndex) {
       if (dataReader.IsDBNull(columnIndex)) {
         return -1;
       }
       return dataReader.GetInt32(columnIndex);
     }
+    public static int GetInt32SafelyOr0(this IDataReader dataReader, int columnIndex) {
+      if (dataReader.IsDBNull(columnIndex)) {
+        return 0;
+      }
+      return dataReader.GetInt32(columnIndex);
+    }
+
 
     public static int GetByteSafely(this IDataReader dataReader, int columnIndex) {
       if (dataReader.IsDBNull(columnIndex)) {

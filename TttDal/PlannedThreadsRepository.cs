@@ -41,18 +41,49 @@ namespace BCh.KTC.TttDal {
 //    + "    WHERE EV_CNFM IS NULL"
     + "    ORDER BY TRAIN_IDN, EV_TIME_P";
 
+    private const string SelectByHeader = "SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicpl"
+      + " WHERE TRAIN_IDN = @header";
+
 
     private readonly string _conString;
     private readonly FbCommand _selectCmd;
     private readonly FbParameter _parUntilTime;
     private readonly FbCommand _selectForTttGeneratorCmd;
-    
+
+    private readonly FbCommand _selectByHeader;
+    private readonly FbParameter _parHeader;
+
     public PlannedThreadsRepository(string conString) {
       _conString = conString;
       _selectCmd = new FbCommand(SelectCmdTxt);
       _parUntilTime = new FbParameter("@untilTime", FbDbType.TimeStamp);
       _selectCmd.Parameters.Add(_parUntilTime);
       _selectForTttGeneratorCmd = new FbCommand(SelectForTttGenCmdTxt);
+      _selectByHeader = new FbCommand(SelectByHeader);
+      _parHeader = new FbParameter("@header", FbDbType.Integer);
+      _selectByHeader.Parameters.Add(_parHeader);
+    }
+
+    public List<PlannedTrainRecord> RetrieveByHeader(int header) {
+      var records = new List<PlannedTrainRecord>();
+      using (var con = new FbConnection(_conString)) {
+        _selectByHeader.Connection = con;
+        _parHeader.Value = header;
+        con.Open();
+        using (var dbReader = _selectByHeader.ExecuteReader()) {
+          // SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid
+          while (dbReader.Read()) {
+            var record = new PlannedTrainRecord {
+              EventType = dbReader.GetInt16Safely(0),
+              ForecastTime = dbReader.GetMinDateTimeIfNull(1),
+              Station = dbReader.GetStringSafely(2),
+              Ndo = dbReader.GetStringSafely(3)
+            };
+            records.Add(record);
+          }
+        }
+      }
+      return records;
     }
 
     public List<PlannedTrainRecord> RetrievePlannedThreads(DateTime till) {

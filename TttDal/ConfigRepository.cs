@@ -28,9 +28,9 @@ namespace BCh.KTC.TttDal {
               TimeType = dbReader.GetInt16Safely(0),
               StationCode = dbReader.GetInt32Safely(1).ToString(),
               StartObjectType = dbReader.GetInt16Safely(2),
-              StartObjectName = dbReader.GetStringSafely(3).TrimEnd(),
+              StartObjectName = dbReader.GetStringSafely(3),
               EndObjectType = dbReader.GetInt16Safely(4),
-              EndObjectName = dbReader.GetStringSafely(5).TrimEnd(),
+              EndObjectName = dbReader.GetStringSafely(5),
               TimeValue = dbReader.GetInt16Safely(6)
             };
             retRecords.Add(record);

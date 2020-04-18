@@ -1,15 +1,13 @@
-﻿using BCh.KTC.PlExBinder.Config;
-using BCh.KTC.PlExBinder.Interfaces;
+﻿using System;
+using System.Timers;
+using BCh.KTC.TrainNumberBinder.Config;
 using BCh.KTC.TttDal;
 using log4net;
-using System;
-using System.Timers;
 
-namespace BCh.KTC.PlExBinder {
+namespace BCh.KTC.TrainNumberBinder {
   public class Binder {
     private static readonly ILog _logger = LogManager.GetLogger(typeof(Binder));
 
-    private string gidDbConString;
     private BinderEngine _engine;
 
     private Timer _timer;
@@ -19,25 +17,31 @@ namespace BCh.KTC.PlExBinder {
     }
 
     private void Initialize() {
-      _logger.Info("Initializing PlExBinder...");
-      gidDbConString = BinderConfig.GetGidDbConnectionString();
+      _logger.Info("Initializing TrainNumberBinder...");
+      string gidDbConString = BinderConfig.GetGidDbConnectionString();
       _logger.Info($"Configured GidDb conString: {gidDbConString}");
 
       var plannedThreadsRepository = new PlannedThreadsRepository(gidDbConString);
       var passedThreadsRepository = new PassedThreadsRepository(gidDbConString);
       var trainHeadersRepository = new TrainHeadersRepository(gidDbConString);
       var storedProcExecutor = new StoredProcExecutor(gidDbConString);
-      IDeferredTaskStorage deferredTaskStorage = new DeferredTaskStorage();
-      BinderConfigDto config = BinderConfig.GetBinderConfig();
-      _engine = new BinderEngine(plannedThreadsRepository, passedThreadsRepository,
-        trainHeadersRepository, storedProcExecutor, deferredTaskStorage, config);
 
+      var maxBindDelta = BinderConfig.GetMaxBindDelta();
+      if (maxBindDelta < 0) {
+        _logger.WarnFormat("MaxBindDelta set in configuration is: {0}. MaxBindDelta re-set is: 30", maxBindDelta);
+        maxBindDelta = 30;
+      } else {
+        _logger.InfoFormat("MaxBindDelta set is: {0}", maxBindDelta);
+      }
+
+      _engine = new BinderEngine(trainHeadersRepository,
+        plannedThreadsRepository, passedThreadsRepository, storedProcExecutor,
+        maxBindDelta);
 
       int cycleTime = BinderConfig.GetCycleTime();
       if (cycleTime < 10) {
         _logger.WarnFormat("CycleTime set in configuration is: {0}. CycleTime re-set is: 10", cycleTime);
-      }
-      else {
+      } else {
         _logger.InfoFormat("CycleTime set is: {0}", cycleTime);
       }
       _timer = new Timer(cycleTime * 1000);
@@ -46,20 +50,19 @@ namespace BCh.KTC.PlExBinder {
 
     public void Start() {
       _timer.Enabled = true;
-      _logger.Info("PlExBinder started.");
+      _logger.Info("TrainNumberBinder started.");
     }
 
     public void Stop() {
       _timer.Enabled = false;
-      _logger.Info("PlExBinder stopped.");
+      _logger.Info("TrainNumber Binder stopped.");
     }
 
     private void TimerElapsed(object sender, ElapsedEventArgs e) {
       _timer.Enabled = false;
       try {
         PerformMainCycle();
-      }
-      catch (Exception ex) {
+      } catch (Exception ex) {
         _logger.Error("An exception occurred while performing the main cycle", ex);
       }
       _timer.Enabled = true;
@@ -69,6 +72,5 @@ namespace BCh.KTC.PlExBinder {
     public void PerformMainCycle() {
       _engine.ExecuteBindingCycle(DateTime.Now);
     }
-
   }
 }

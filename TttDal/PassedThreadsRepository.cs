@@ -14,6 +14,9 @@ namespace BCh.KTC.TttDal {
       + " AND EV_NDO = @ndo"
       + " AND(EV_TYPE = @evType1 OR EV_TYPE = @evType2)"
       + " AND EV_TIME BETWEEN @from AND @till";
+    private const string SelectByHeader = "SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid"
+      + " WHERE TRAIN_IDN = @header";
+
     private readonly FbCommand _selectCmd;
     private readonly FbParameter _parStation;
     private readonly FbParameter _parNdo;
@@ -21,6 +24,10 @@ namespace BCh.KTC.TttDal {
     private readonly FbParameter _parEvType2;
     private readonly FbParameter _parFrom;
     private readonly FbParameter _parTill;
+
+    private readonly FbCommand _selectByHeader;
+    private readonly FbParameter _parHeader;
+
 
     private readonly string _conString;
 
@@ -36,7 +43,34 @@ namespace BCh.KTC.TttDal {
       _parFrom = new FbParameter("@from", FbDbType.TimeStamp);
       _parTill = new FbParameter("@till", FbDbType.TimeStamp);
       _selectCmd.Parameters.AddRange(new[] { _parStation, _parNdo, _parEvType1, _parEvType2, _parFrom, _parTill });
+
+      _selectByHeader = new FbCommand(SelectByHeader);
+      _parHeader = new FbParameter("@header", FbDbType.Integer);
+      _selectByHeader.Parameters.Add(_parHeader);
     }
+
+    public List<PassedTrainRecord> RetrieveByHeader(int header) {
+      var records = new List<PassedTrainRecord>();
+      using (var con = new FbConnection(_conString)) {
+        _selectByHeader.Connection = con;
+        _parHeader.Value = header;
+        con.Open();
+        using (var dbReader = _selectByHeader.ExecuteReader()) {
+          // SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid
+          while (dbReader.Read()) {
+            var record = new PassedTrainRecord {
+              EventType = dbReader.GetInt16Safely(0),
+              EventTime = dbReader.GetMinDateTimeIfNull(1),
+              Station = dbReader.GetStringSafely(2),
+              Ndo = dbReader.GetStringSafely(3)
+            };
+            records.Add(record);
+          }
+        }
+      }
+      return records;
+    }
+
 
     public List<PassedTrainRecord> RetrievePassedTrainRecords(
         string station, string ndo, bool isArrival,
@@ -63,7 +97,7 @@ namespace BCh.KTC.TttDal {
               TrainId = dbReader.GetInt32Safely(1),
               EventType = dbReader.GetInt16Safely(2),
               EventTime = dbReader.GetMinDateTimeIfNull(3),
-              StationCode = dbReader.GetStringSafely(4),
+              Station = dbReader.GetStringSafely(4),
               Axis = dbReader.GetStringSafely(5),
               Ndo = dbReader.GetStringSafely(6),
               NdoType = dbReader.GetInt32(7),
@@ -74,10 +108,7 @@ namespace BCh.KTC.TttDal {
           }
           return retRecords;
         }
-
-
       }
-
     }
   }
 }

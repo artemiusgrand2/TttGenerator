@@ -7,7 +7,7 @@ namespace BCh.KTC.TttEntities
     public int TrainId { get; set; } // train_idn; ref to TrainHeaders
     public int EventType { get; set; } // ev_type: 1,2 - arrvial; 3 - departure
     public DateTime EventTime { get; set; } // ev_time
-    public string StationCode { get; set; } // ev_station
+    public string Station { get; set; } // ev_station
     public string Axis { get; set; } // ev_axis
     public string Ndo { get; set; } // ev_ndo
     public int NdoType { get; set; } // ev_dop: 3 - track, 5 - b/u

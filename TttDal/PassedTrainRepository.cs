@@ -18,7 +18,7 @@ namespace BCh.KTC.TttDal {
       record.TrainId = dr.GetInt32Safely(1);
       record.EventType = dr.GetInt16Safely(2);
       record.EventTime = dr.GetDateTime(3);
-      record.StationCode = dr.GetStringSafely(4);
+      record.Station = dr.GetStringSafely(4);
       record.Axis = dr.GetStringSafely(5);
       record.Ndo = dr.GetStringSafely(6);
       record.NdoType = dr.GetInt32Safely(7);
