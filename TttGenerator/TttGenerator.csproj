@@ -62,7 +62,7 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="3tgen-versions.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>

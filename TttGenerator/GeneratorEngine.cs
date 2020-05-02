@@ -227,7 +227,7 @@ namespace BCh.KTC.TttGenerator {
       int i = index;
       while (--i >= 0) {
         if (thread[index].ForecastTime - thread[i].ForecastTime < _prevAckPeriod) {
-          if (thread[i].AckEventFlag != -1) {
+          if (thread[i].AckEventFlag != -1 || i == 0) {
             return true;
           }
         } else {
