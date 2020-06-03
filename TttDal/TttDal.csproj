@@ -47,7 +47,9 @@
   <ItemGroup>
     <Compile Include="BaseRepository.cs" />
     <Compile Include="BaseUpdatingRepository.cs" />
+    <Compile Include="CommandThreadsRepository.cs" />
     <Compile Include="ConfigRepository.cs" />
+    <Compile Include="Interfaces\ICommandThreadsRepository.cs" />
     <Compile Include="Interfaces\IConfigRepository.cs" />
     <Compile Include="Interfaces\IPassedThreadsRepository.cs" />
     <Compile Include="Interfaces\IPlannedThreadsRepository.cs" />

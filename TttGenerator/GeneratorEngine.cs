@@ -15,6 +15,7 @@ namespace BCh.KTC.TttGenerator {
     private readonly IPlannedThreadsRepository _plannedRepo;
     private readonly ITtTaskRepository _taskRepo;
     private readonly ITrainHeadersRepository _trainHeadersRepo;
+    private readonly ICommandThreadsRepository _commandRepo;
     private readonly TimeSpan _prevAckPeriod; // 15 - 20 minutes
 
 
@@ -23,12 +24,14 @@ namespace BCh.KTC.TttGenerator {
         IPlannedThreadsRepository plannedRepo,
         ITtTaskRepository taskRepo,
         ITrainHeadersRepository trainHeadersRepo,
+        ICommandThreadsRepository commandRepo,
         int prevAckPeriod) {
       _timeConstraintCalculator = timeConstraintCalculator;
       _controlledStations = controlledStations;
       _plannedRepo = plannedRepo;
       _taskRepo = taskRepo;
       _trainHeadersRepo = trainHeadersRepo;
+      _commandRepo = commandRepo;
       _prevAckPeriod = new TimeSpan(0, prevAckPeriod, 0);
     }
 
@@ -120,7 +123,8 @@ namespace BCh.KTC.TttGenerator {
           && are4ThereAnyAckEvents
           || (has2TimeConstraintsPassed
               && has3OtherTrainDependenciesPassed
-              && is6TaskGenAllowedForStationEvent)) {
+              && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId))) {
+
 
         TtTaskRecord task = CreateTask(thread[index], dependencyEventReference, executionTime);
         _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");

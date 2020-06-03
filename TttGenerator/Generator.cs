@@ -32,12 +32,13 @@ namespace BCh.KTC.TttGenerator {
       var plannedRepo = new PlannedThreadsRepository(_gidDbConString);
       var taskRepo = new TtTaskRepository(_gidDbConString);
       var trainHeadersRepo = new TrainHeadersRepository(_gidDbConString);
-      var timeConstraintCalculator = new TimeConstraintCalculator(controlledStations,
+            var commandRepo = new CommandThreadsRepository(_gidDbConString);
+            var timeConstraintCalculator = new TimeConstraintCalculator(controlledStations,
         GeneratorConfig.GetReserveTime(),
         GeneratorConfig.GetAdvanceCommandExecutionPeriod());
-      _engine = new GeneratorEngine(timeConstraintCalculator,
+        _engine = new GeneratorEngine(timeConstraintCalculator,
         controlledStations,
-        plannedRepo, taskRepo, trainHeadersRepo,
+        plannedRepo, taskRepo, trainHeadersRepo, commandRepo,
         GeneratorConfig.GetPrevAckTime());
 
       int cycleTime = GeneratorConfig.GetCycleTime();

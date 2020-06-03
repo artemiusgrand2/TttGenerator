@@ -1,0 +1,89 @@
+[33mcommit 61df7f399532b6b0171f915df73fec2854cfc9c2[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat May 2 13:28:48 2020 +0300
+
+    1.0.4.0 - Re-written the algorithm according to rules.txt.
+
+[33mcommit ec8f3ff740c098e6dfbcc20cdaa7130e0a830ffb[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Apr 18 12:53:37 2020 +0300
+
+    Added TrainNumberBinder
+
+[33mcommit 4170f0e10d44aa8e57ce29a33e2d2221f0608f0e[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Apr 11 14:55:37 2020 +0300
+
+    1.0.4.0 - Re-written the algorithm according to rules.txt.
+
+[33mcommit 7bfceb3d326f3921d645c33a8e22d4337f523579[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Mar 28 11:05:54 2020 +0300
+
+    Added descriptions of configuration settings for 3TGenerator and PlExBinder.
+
+[33mcommit 6628719f42cea2315447211d9c48e747daab1c9a[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Mar 21 13:29:07 2020 +0300
+
+    1.0.3.0 - Switched from PlannedTime (ev_time_p) to ForecastTime (ev_time) in TimeConstraintCalculator check (3).
+
+[33mcommit 447d40ad42cb9b0f485de13186f5ce3f6b6f77f3[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Mar 21 12:14:57 2020 +0300
+
+    1.0.2.0 - Switched from PlannedTime (ev_time_p) to ForecastTime (ev_time) only in Self Dependency check (1).
+
+[33mcommit f7d183f29956b44fc128239d07a0fcf6e80edc47[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Mar 14 12:27:59 2020 +0300
+
+    Added more detailed DEBUG logging.
+
+[33mcommit 6ba2f69707b1c9ee592cb309768628f73bfd511f[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Feb 29 12:34:17 2020 +0300
+
+    Upgraded version 1.0.1.0. Added unit test infrastructure.
+
+[33mcommit 8556a838a7ad1933aefdd3f231df0852a5c60f36[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Feb 29 10:46:53 2020 +0300
+
+    Refactored TttGeneratorEngine - extracted TimeConstraintCalculator.
+
+[33mcommit 61f7a16e8e83e3550398748014e0d0c03c4d64da[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 30 13:25:15 2019 +0300
+
+    Added the DependencyEventReference to Task.
+
+[33mcommit 567843813da5bf317f3a9621614c72d73b0c1823[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 30 12:47:54 2019 +0300
+
+    Fixed a train dependency bug.
+
+[33mcommit b52d91f61dc66b08f1caafbe2f121ccc222835df[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 23 13:54:47 2019 +0300
+
+    Fixed logging when creatinga task.
+
+[33mcommit 8704ed637c8cbdd00e367575d06c7072be9aa91a[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 23 13:44:16 2019 +0300
+
+    Added AdvanceCommandExecution feature.
+
+[33mcommit f4e99da9d7de67046c3ee3dc6ad664b38bfe0b64[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 23 13:06:51 2019 +0300
+
+    Added the TttGenerator solution
+
+[33mcommit 0854dd445c842994942906dd121b969f5aef903f[m
+Author: Gena <gzenyuk@mail.ru>
+Date:   Sat Nov 23 13:05:57 2019 +0300
+
+    Initial commit - Added .gitignore
