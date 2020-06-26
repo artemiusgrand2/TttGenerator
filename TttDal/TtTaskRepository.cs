@@ -16,7 +16,7 @@ namespace BCh.KTC.TttDal {
     + " OB_STT_TYPE, OB_STT_NAME, OB_END_TYPE, OB_END_NAME,"
     + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, LNK_DEF_IDN_E, STD_FORM, FL_SND)"
     + " VALUES (@station, @trainNumber, @startObjType, @startObjName, @endObjType, @endObjName,"
-    + " @eventRecId, @execTime, @creationTime, @depEvRef, 2, 0)";
+    + " @eventRecId, @execTime, @creationTime, @depEvRef, 2, @flSnd)";
     
     private readonly string _conString;
     private readonly FbCommand _selectCmd;
@@ -31,6 +31,7 @@ namespace BCh.KTC.TttDal {
     private readonly FbParameter _parExecTime;
     private readonly FbParameter _parCreationTime;
     private readonly FbParameter _parDepEvRef;
+    private readonly FbParameter _parSndFlag;
 
     public TtTaskRepository(string conString) {
       _conString = conString;
@@ -46,7 +47,8 @@ namespace BCh.KTC.TttDal {
       _parExecTime = new FbParameter("@execTime", FbDbType.TimeStamp);
       _parCreationTime = new FbParameter("@creationTime", FbDbType.TimeStamp);
       _parDepEvRef = new FbParameter("@depEvRef", FbDbType.Integer);
-      _insertCmd.Parameters.AddRange(new[] {
+      _parSndFlag = new FbParameter("@flSnd", FbDbType.Integer);
+            _insertCmd.Parameters.AddRange(new[] {
         _parStation,
         _parTrainNumber,
         _parStartObjType,
@@ -56,7 +58,7 @@ namespace BCh.KTC.TttDal {
         _parEventRecId,
         _parExecTime,
         _parCreationTime,
-        _parDepEvRef,
+        _parDepEvRef, _parSndFlag
       });
     }
 
@@ -78,7 +80,7 @@ namespace BCh.KTC.TttDal {
           _parExecTime.Value = task.ExecutionTime;
           _parCreationTime.Value = task.CreationTime;
           _parDepEvRef.Value = task.DependencyEventReference;
-
+          _parSndFlag.Value = task.SentFlag;
           _insertCmd.ExecuteNonQuery();
           tx.Commit();
         }
