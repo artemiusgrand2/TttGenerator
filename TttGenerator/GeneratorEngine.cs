@@ -20,6 +20,7 @@ namespace BCh.KTC.TttGenerator
         private readonly ITrainHeadersRepository _trainHeadersRepo;
         private readonly ICommandThreadsRepository _commandRepo;
         private readonly TimeSpan _prevAckPeriod; // 15 - 20 minutes
+        private readonly TimeSpan  _periodConversionExecTime; //in minutes
 
 
         public GeneratorEngine(TimeConstraintCalculator timeConstraintCalculator,
@@ -28,7 +29,7 @@ namespace BCh.KTC.TttGenerator
             ITtTaskRepository taskRepo,
             ITrainHeadersRepository trainHeadersRepo,
             ICommandThreadsRepository commandRepo,
-            int prevAckPeriod)
+            int prevAckPeriod, int periodConversionExecTime)
         {
             _timeConstraintCalculator = timeConstraintCalculator;
             _controlledStations = controlledStations;
@@ -37,8 +38,14 @@ namespace BCh.KTC.TttGenerator
             _trainHeadersRepo = trainHeadersRepo;
             _commandRepo = commandRepo;
             _prevAckPeriod = new TimeSpan(0, prevAckPeriod, 0);
+            _periodConversionExecTime = new TimeSpan(0, periodConversionExecTime, 0);
         }
 
+        private bool IsTimeDiffWithinDelta(DateTime time1, DateTime time2)
+        {
+            TimeSpan delta = (time1 > time2) ? time1 - time2 : time2 - time1;
+            return delta > _periodConversionExecTime;
+        }
 
         public void PerformWorkingCycle(DateTime currentTime)
         {
@@ -90,11 +97,20 @@ namespace BCh.KTC.TttGenerator
 
             // -1 checking already issued tasks
             var existingTask = FindIssuedTask(thread[index].RecId, tasks);
+            DateTime executionTime;
             if (existingTask != null)
             {
                 if (existingTask.SentFlag != 4)
                 {
                     _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString());
+                    //conversion execTime
+                    if(existingTask.SentFlag != 5)
+                    {
+                        _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+                        if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
+                            _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
+                    }
+                    //
                     return;
                 }
                 if (++index < thread.Length)
@@ -122,7 +138,6 @@ namespace BCh.KTC.TttGenerator
             bool has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index);
 
             // 2 time constraints
-            DateTime executionTime;
             bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
 
             if (lastAckEventOrBeginning + _prevAckPeriod < executionTime)

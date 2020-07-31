@@ -1,4 +1,5 @@
-﻿using BCh.KTC.TttDal;
+﻿using System.Linq;
+using BCh.KTC.TttDal;
 using BCh.KTC.TttEntities;
 using System.Collections.Generic;
 using System.Configuration;
@@ -30,7 +31,19 @@ namespace BCh.KTC.TttGenerator.Config {
       return int.Parse(ConfigurationManager.AppSettings["advanceCmdExecPeriod"]);
     }
 
-    public static Dictionary<string, ControlledStation> GetControlledStations() {
+        public static int GetPeriodConversionExecTime()
+        {
+            if (ConfigurationManager.AppSettings.AllKeys.Contains("periodConversionExecTime"))
+            {
+                int buffer;
+                if (int.TryParse(ConfigurationManager.AppSettings["periodConversionExecTime"], out buffer) && buffer >= 1)
+                    return buffer;
+            }
+            //
+            return 2;
+        }
+
+        public static Dictionary<string, ControlledStation> GetControlledStations() {
       var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
       var engineSection = config.GetSection("engine") as EngineSection;
 

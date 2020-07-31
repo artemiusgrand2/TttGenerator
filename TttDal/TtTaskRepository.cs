@@ -1,4 +1,5 @@
-﻿using BCh.KTC.TttEntities;
+﻿using System;
+using BCh.KTC.TttEntities;
 using FirebirdSql.Data.FirebirdClient;
 using BCh.KTC.TttDal.Interfaces;
 using System.Collections.Generic;
@@ -17,10 +18,14 @@ namespace BCh.KTC.TttDal {
     + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, LNK_DEF_IDN_E, STD_FORM, FL_SND)"
     + " VALUES (@station, @trainNumber, @startObjType, @startObjName, @endObjType, @endObjName,"
     + " @eventRecId, @execTime, @creationTime, @depEvRef, 2, @flSnd)";
-    
+        private const string UpdateExecTimeCmdText = "UPDATE TCOMDEFINITIONS"
+    + " SET TM_DEF_START = @execTime, FL_SND = 0"
+    + " WHERE DEF_IDN = @defIdn";
     private readonly string _conString;
     private readonly FbCommand _selectCmd;
     private readonly FbCommand _insertCmd;
+    private readonly FbCommand _updateExecTimeCmd;
+
     private readonly FbParameter _parStation;
     private readonly FbParameter _parTrainNumber;
     private readonly FbParameter _parStartObjType;
@@ -33,21 +38,26 @@ namespace BCh.KTC.TttDal {
     private readonly FbParameter _parDepEvRef;
     private readonly FbParameter _parSndFlag;
 
-    public TtTaskRepository(string conString) {
-      _conString = conString;
-      _selectCmd = new FbCommand(SelectCmdText);
-      _insertCmd = new FbCommand(InsertCmdText);
-      _parStation = new FbParameter("@station", FbDbType.Integer);
-      _parTrainNumber = new FbParameter("@trainNumber", FbDbType.Char, 4);
-      _parStartObjType = new FbParameter("@startObjType", FbDbType.SmallInt);
-      _parStartObjName = new FbParameter("@startObjName", FbDbType.Char, 8);
-      _parEndObjType = new FbParameter("@endObjType", FbDbType.SmallInt);
-      _parEndObjName = new FbParameter("@endObjName", FbDbType.Char, 8);
-      _parEventRecId = new FbParameter("@eventRecId", FbDbType.Integer);
-      _parExecTime = new FbParameter("@execTime", FbDbType.TimeStamp);
-      _parCreationTime = new FbParameter("@creationTime", FbDbType.TimeStamp);
-      _parDepEvRef = new FbParameter("@depEvRef", FbDbType.Integer);
-      _parSndFlag = new FbParameter("@flSnd", FbDbType.Integer);
+        private readonly FbParameter _parExecTimeUpdate;
+        private readonly FbParameter _parDefIdnUpdate;
+
+
+        public TtTaskRepository(string conString)
+        {
+            _conString = conString;
+            _selectCmd = new FbCommand(SelectCmdText);
+            _insertCmd = new FbCommand(InsertCmdText);
+            _parStation = new FbParameter("@station", FbDbType.Integer);
+            _parTrainNumber = new FbParameter("@trainNumber", FbDbType.Char, 4);
+            _parStartObjType = new FbParameter("@startObjType", FbDbType.SmallInt);
+            _parStartObjName = new FbParameter("@startObjName", FbDbType.Char, 8);
+            _parEndObjType = new FbParameter("@endObjType", FbDbType.SmallInt);
+            _parEndObjName = new FbParameter("@endObjName", FbDbType.Char, 8);
+            _parEventRecId = new FbParameter("@eventRecId", FbDbType.Integer);
+            _parExecTime = new FbParameter("@execTime", FbDbType.TimeStamp);
+            _parCreationTime = new FbParameter("@creationTime", FbDbType.TimeStamp);
+            _parDepEvRef = new FbParameter("@depEvRef", FbDbType.Integer);
+            _parSndFlag = new FbParameter("@flSnd", FbDbType.Integer);
             _insertCmd.Parameters.AddRange(new[] {
         _parStation,
         _parTrainNumber,
@@ -60,7 +70,12 @@ namespace BCh.KTC.TttDal {
         _parCreationTime,
         _parDepEvRef, _parSndFlag
       });
-    }
+            //
+            _parExecTimeUpdate = new FbParameter("@execTime", FbDbType.TimeStamp);
+            _parDefIdnUpdate = new FbParameter("@defIdn", FbDbType.Integer);
+            _updateExecTimeCmd = new FbCommand(UpdateExecTimeCmdText);
+            _updateExecTimeCmd.Parameters.AddRange(new[] { _parExecTimeUpdate, _parDefIdnUpdate });
+        }
 
 
     public void InsertTtTask(TtTaskRecord task) {
@@ -87,7 +102,25 @@ namespace BCh.KTC.TttDal {
       }
     }
 
-    public List<TtTaskRecord> GetTtTasks() {
+        public void UpdateExecTimeTask(DateTime execTime, int defIdn)
+        {
+            using (var con = new FbConnection(_conString))
+            {
+                con.Open();
+                using (var tx = con.BeginTransaction())
+                {
+                    _updateExecTimeCmd.Connection = con;
+                    _updateExecTimeCmd.Transaction = tx;
+                    //
+                    _parExecTimeUpdate.Value = execTime;
+                    _parDefIdnUpdate.Value = defIdn;
+                    _updateExecTimeCmd.ExecuteNonQuery();
+                    tx.Commit();
+                }
+            }
+        }
+
+        public List<TtTaskRecord> GetTtTasks() {
       var retRecords = new List<TtTaskRecord>();
       using (var con = new FbConnection(_conString)) {
         con.Open();

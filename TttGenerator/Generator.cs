@@ -39,7 +39,7 @@ namespace BCh.KTC.TttGenerator {
         _engine = new GeneratorEngine(timeConstraintCalculator,
         controlledStations,
         plannedRepo, taskRepo, trainHeadersRepo, commandRepo,
-        GeneratorConfig.GetPrevAckTime());
+        GeneratorConfig.GetPrevAckTime(), GeneratorConfig.GetPeriodConversionExecTime());
 
       int cycleTime = GeneratorConfig.GetCycleTime();
       if (cycleTime < 10) {
