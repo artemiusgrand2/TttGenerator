@@ -129,7 +129,7 @@ namespace BCh.KTC.TttGenerator
             if (index > 0)
             {
                 var prevTask = FindIssuedTask(thread[index - 1].RecId, tasks);
-                if (prevTask != null && prevTask.SentFlag == 4)
+                if (prevTask != null && prevTask.SentFlag == 4 && EquallyPlanAndExucTaskEvent(prevTask, thread[index - 1]))
                 {
                     has11PrevTaskBeenExecuted = true;
                 }
@@ -161,7 +161,7 @@ namespace BCh.KTC.TttGenerator
                     && has3OtherTrainDependenciesPassed
                     && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId)))
             {
-                TtTaskRecord task = CreateTask(thread[index], dependencyEventReference, executionTime);
+                TtTaskRecord task = CreateTask(thread[index],  (index  == 0)? true : has11PrevTaskBeenExecuted,  dependencyEventReference, executionTime);
                 //
                 if (IsRepeatCompletedTask(task, tasks))
                     task.SentFlag = 4;
@@ -204,7 +204,7 @@ namespace BCh.KTC.TttGenerator
             return threads[index].ForecastTime - threads[0].ForecastTime < _prevAckPeriod;
         }
 
-        private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord,
+        private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, bool hasPrevTaskBeenExecuted,
             int dependecyEventReference,
             DateTime executionTime)
         {
@@ -224,7 +224,11 @@ namespace BCh.KTC.TttGenerator
                 task.RouteStartObjectName = plannedTrainRecord.Axis;
                 task.RouteEndObjectType = 5;
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
+                //
+                if (!hasPrevTaskBeenExecuted)
+                    task.SentFlag = 6;
             }
+            //
             task.CreationTime = DateTime.Now;
             task.ExecutionTime = executionTime;
             task.PlannedEventReference = plannedTrainRecord.RecId;
@@ -337,6 +341,12 @@ namespace BCh.KTC.TttGenerator
                 if (recId == task.PlannedEventReference) return task;
             }
             return null;
+        }
+
+        private bool EquallyPlanAndExucTaskEvent(TtTaskRecord task, PlannedTrainRecord plan)
+        {
+            return (plan.Station == task.Station && ((plan.EventType == 3 && plan.Axis == task.RouteStartObjectName && plan.Ndo == task.RouteEndObjectName) ||
+                (plan.EventType == 2 && plan.Axis == task.RouteEndObjectName && plan.Ndo == task.RouteStartObjectName)));
         }
 
         private bool IsRepeatCompletedTask(TtTaskRecord task, List<TtTaskRecord> tasks)
