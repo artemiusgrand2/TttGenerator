@@ -129,7 +129,7 @@ namespace BCh.KTC.TttGenerator
             if (index > 0)
             {
                 var prevTask = FindIssuedTask(thread[index - 1].RecId, tasks);
-                if (prevTask != null && prevTask.SentFlag == 4 && EquallyPlanAndExucTaskEvent(prevTask, thread[index - 1]))
+                if (prevTask != null && prevTask.SentFlag == 4)
                 {
                     has11PrevTaskBeenExecuted = true;
                 }
@@ -161,7 +161,7 @@ namespace BCh.KTC.TttGenerator
                     && has3OtherTrainDependenciesPassed
                     && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId)))
             {
-                TtTaskRecord task = CreateTask(thread[index],  (index  == 0)? true : has11PrevTaskBeenExecuted,  dependencyEventReference, executionTime);
+                TtTaskRecord task = CreateTask(thread[index],  (index  > 0)? thread[index -1]: null,  dependencyEventReference, executionTime);
                 //
                 if (IsRepeatCompletedTask(task, tasks))
                     task.SentFlag = 4;
@@ -204,7 +204,7 @@ namespace BCh.KTC.TttGenerator
             return threads[index].ForecastTime - threads[0].ForecastTime < _prevAckPeriod;
         }
 
-        private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, bool hasPrevTaskBeenExecuted,
+        private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, PlannedTrainRecord prevPlannedTrainRecord,
             int dependecyEventReference,
             DateTime executionTime)
         {
@@ -225,7 +225,8 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectType = 5;
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
-                if (!hasPrevTaskBeenExecuted)
+                if (prevPlannedTrainRecord !=null && 
+                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis)
                     task.SentFlag = 6;
             }
             //
