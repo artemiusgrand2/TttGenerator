@@ -104,12 +104,15 @@ namespace BCh.KTC.TttGenerator
                 {
                     _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString());
                     //conversion execTime
-                    if(existingTask.SentFlag != 5)
-                    {
-                        _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
-                        if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
-                            _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
-                    }
+                    //if(existingTask.SentFlag != 5 && existingTask.SentFlag != 6)
+                    //{
+                    //    _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+                    //    if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
+                    //    {
+                    //        _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
+                    //        _logger.Debug($"Update executionTime. New time - {executionTime.ToShortDateString()} {executionTime.ToShortTimeString()} - " + thread[index].ToString());
+                    //    }
+                    //}
                     //
                     return;
                 }
@@ -163,8 +166,8 @@ namespace BCh.KTC.TttGenerator
             {
                 TtTaskRecord task = CreateTask(thread[index],  (index  > 0)? thread[index -1]: null,  dependencyEventReference, executionTime);
                 //
-                if (IsRepeatCompletedTask(task, tasks))
-                    task.SentFlag = 4;
+                //if (IsRepeatCompletedTask(task, tasks))
+                //    task.SentFlag = 4;
                 _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");

@@ -23,29 +23,39 @@ namespace BCh.KTC.TttGenerator {
     public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
         int index, DateTime currentTime, out DateTime executionTime) {
       int delta = 0;
-      if (!_controlledStations.ContainsKey(threads[index].Station)) {
-        _logger.Error($"Configuration for station {threads[index].Station} not found!");
-        delta = CalculateDefaultDelta(threads, index);
-      } else {
-        var station = _controlledStations[threads[index].Station];
-        if (threads[index].EventType != 3) { // arrival
-          delta = GetConfiguredTimeInterval(station, 1, threads[index])
-            + GetConfiguredTimeInterval(station, 2, threads[index])
-            + GetConfiguredTimeInterval(station, 5, threads[index]);
-        } else { // departure
-          if (index != 0) {
-            var diff = threads[index].ForecastTime - threads[index - 1].ForecastTime;
-            delta = (diff > new TimeSpan(0, 10, 0))
-              ? GetConfiguredTimeInterval(station, 3, threads[index]) + _reserveTime
-              : GetConfiguredTimeInterval(station, 2, threads[index]) + _reserveTime;
-          } else {
-            delta = GetConfiguredTimeInterval(station, 3, threads[index]) + _reserveTime;
-          }
-        }
-        if (delta == 0) {
-          delta = CalculateDefaultDelta(threads, index);
-        }
-      }
+            if (!_controlledStations.ContainsKey(threads[index].Station))
+            {
+                _logger.Error($"Configuration for station {threads[index].Station} not found!");
+                delta = CalculateDefaultDelta(threads, index);
+            }
+            else
+            {
+                var station = _controlledStations[threads[index].Station];
+                if (threads[index].EventType != 3)
+                { // arrival
+                    delta = GetConfiguredTimeInterval(station, 1, threads[index])
+                      + GetConfiguredTimeInterval(station, 2, threads[index])
+                      + GetConfiguredTimeInterval(station, 5, threads[index]);
+                }
+                else
+                { // departure
+                    if (index != 0)
+                    {
+                        var diff = threads[index].ForecastTime - threads[index - 1].ForecastTime;
+                        delta = (diff > new TimeSpan(0, 10, 0))
+                          ? GetConfiguredTimeInterval(station, 3, threads[index]) + _reserveTime
+                          : GetConfiguredTimeInterval(station, 2, threads[index]) + _reserveTime;
+                    }
+                    else
+                    {
+                        delta = (GetConfiguredTimeInterval(station, 3, threads[index]) + _reserveTime) / 3;
+                    }
+                }
+                if (delta == 0)
+                {
+                    delta = CalculateDefaultDelta(threads, index);
+                }
+            }
       executionTime = threads[index].ForecastTime.AddMinutes(-delta);
       return executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
     }
