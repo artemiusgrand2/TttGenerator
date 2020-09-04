@@ -122,7 +122,6 @@ namespace BCh.KTC.TttGenerator
                 }
                 return;
             }
-
             // 0 (4)- is the thread identified (bound; are there any ack events)
             DateTime lastAckEventOrBeginning;
             bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning);

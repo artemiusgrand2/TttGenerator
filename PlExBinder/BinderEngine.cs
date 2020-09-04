@@ -48,7 +48,7 @@ namespace BCh.KTC.PlExBinder {
       var tasks = _deferredTaskStorage.GetDeferredTasks();
       foreach (var task in tasks) {
         List<PassedTrainRecord> candidates = _passedThreadsRepository.RetrievePassedTrainRecords(
-          task.EventStation, task.EventNdoObject, task.EventType == 2,
+          task.EventStation, task.NeighbourStationCode, task.EventType == 2,
           task.PlannedTime.AddMinutes(-_config.SearchThresholdBeforePlannedTask),
           executionTime.AddMinutes(-_config.SearchThresholdBeforeCurrentTime));
         if (candidates.Count > 0) {
@@ -85,6 +85,7 @@ namespace BCh.KTC.PlExBinder {
           EventType = record.EventType,
           EventStation = record.Station,
           PlannedTime = record.PlannedTime,
+          NeighbourStationCode = record.NeighbourStationCode,
           EventAxis = record.Axis,
           EventNdoObject = record.Ndo,
           CreationTime = DateTime.Now,

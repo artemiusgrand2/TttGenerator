@@ -86,43 +86,50 @@ namespace BCh.KTC.TttDal {
       return records;
     }
 
-    public List<PlannedTrainRecord> RetrievePlannedThreads(DateTime till) {
-      var records = new List<PlannedTrainRecord>();
-      using (var con = new FbConnection(_conString)) {
-        _selectCmd.Connection = con;
-        _parUntilTime.Value = till;
-        con.Open();
-        using (var dbReader = _selectCmd.ExecuteReader()) {
-          while (dbReader.Read()) {
-            /*
-    + "    RR.EV_REC_IDN, RR.TRAIN_IDN, RR.EV_TYPE, RR.EV_TIME, RR.EV_TIME_P,"
-    + "    RR.EV_STATION, RR.EV_AXIS, RR.EV_NDO, RR.EV_NE_STATION, RR.EV_CNFM,"
-    + "    RR.LNKE_REC_IDN, RR.FL_DEF"
-             */
-            var record = new PlannedTrainRecord {
-              RecId = dbReader.GetInt32Safely(0),
-              TrainId = dbReader.GetInt32Safely(1),
-              EventType = dbReader.GetInt16Safely(2),
-              ForecastTime = dbReader.GetDateTime(3),
-              PlannedTime = dbReader.GetDateTime(4),
-              Station = dbReader.GetStringSafely(5),
-              Axis = dbReader.GetStringSafely(6),
-              Ndo = dbReader.GetStringSafely(7),
-              //NeighbourStationCode { get; set; } // ev_ne_station
-              //AckEventFlag { get; set; } // ev_cnfm: 2 - the event has been acknoledged
-              AckEventFlag = dbReader.GetInt16Safely(9),
-              //PlannedEventReference { get; set; } // lnke_rec_idn
-              //AutopilotState { get; set; } // fl_def
-            };
-            if (record.Station.Length == 8) {
-              record.Station = record.Station.Substring(2, 6);
+        public List<PlannedTrainRecord> RetrievePlannedThreads(DateTime till)
+        {
+            var records = new List<PlannedTrainRecord>();
+            using (var con = new FbConnection(_conString))
+            {
+                _selectCmd.Connection = con;
+                _parUntilTime.Value = till;
+                con.Open();
+                using (var dbReader = _selectCmd.ExecuteReader())
+                {
+                    while (dbReader.Read())
+                    {
+                        /*
+                + "    RR.EV_REC_IDN, RR.TRAIN_IDN, RR.EV_TYPE, RR.EV_TIME, RR.EV_TIME_P,"
+                + "    RR.EV_STATION, RR.EV_AXIS, RR.EV_NDO, RR.EV_NE_STATION, RR.EV_CNFM,"
+                + "    RR.LNKE_REC_IDN, RR.FL_DEF"
+                         */
+                        var record = new PlannedTrainRecord
+                        {
+                            RecId = dbReader.GetInt32Safely(0),
+                            TrainId = dbReader.GetInt32Safely(1),
+                            EventType = dbReader.GetInt16Safely(2),
+                            ForecastTime = dbReader.GetDateTime(3),
+                            PlannedTime = dbReader.GetDateTime(4),
+                            Station = dbReader.GetStringSafely(5),
+                            Axis = dbReader.GetStringSafely(6),
+                            Ndo = dbReader.GetStringSafely(7),
+                            NeighbourStationCode = dbReader.GetStringSafely(8), // ev_ne_station
+                                                                                //AckEventFlag { get; set; } // ev_cnfm: 2 - the event has been acknoledged
+                            AckEventFlag = dbReader.GetInt16Safely(9),
+                            //PlannedEventReference { get; set; } // lnke_rec_idn
+                            //AutopilotState { get; set; } // fl_def
+                        };
+                        //if (record.Station.Length == 8)
+                        //{
+                        //    record.Station = record.Station.Substring(2, 6);
+                        //    record.NeighbourStationCode = record.NeighbourStationCode.Substring(2, 6);
+                        //}
+                        records.Add(record);
+                    }
+                }
             }
-            records.Add(record);
-          }
+            return records;
         }
-      }
-      return records;
-    }
 
 
     public List<PlannedTrainRecord> RetrieveThreadsForTttGenerator(DateTime currentTime) {

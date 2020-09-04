@@ -49,13 +49,13 @@ namespace BCh.KTC.PlExBinder {
     }
 
     public bool DoesSimilarOneExist(string station,
-        int eventType, string eventAxis, string eventNdo) {
+        int eventType, string eventAxis, string neighbourStationCode) {
       var tasks = _tasks.Values.ToList();
       foreach (var task in tasks) {
         if (task.EventStation == station
             && task.EventType == eventType
             && task.EventAxis == eventAxis
-            && task.EventNdoObject == eventNdo) {
+            && task.NeighbourStationCode == neighbourStationCode) {
           return true;
         }
       }
