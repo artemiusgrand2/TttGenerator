@@ -257,7 +257,7 @@ namespace BCh.KTC.TttGenerator
                     { // Arrival
                         if (aThread[i].Station == thread[index].Station
                             && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo)
-                              || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)))
+                             /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/))
                         {
                             eventFound = true;
                         }
