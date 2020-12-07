@@ -5,6 +5,7 @@ namespace BCh.KTC.TttGenerator.Config {
     private static readonly ConfigurationProperty _id;
     private static readonly ConfigurationProperty _genNotCfmArr;
     private static readonly ConfigurationProperty _genNotCfmDep;
+        private static readonly ConfigurationProperty _isCrossing;
     private static readonly ConfigurationPropertyCollection _properties;
 
     static ControlledStationElement() {
@@ -12,7 +13,8 @@ namespace BCh.KTC.TttGenerator.Config {
         ConfigurationPropertyOptions.IsRequired | ConfigurationPropertyOptions.IsKey);
       _genNotCfmArr = new ConfigurationProperty("genNotCfmArr", typeof(bool), false);
       _genNotCfmDep = new ConfigurationProperty("genNotCfmDep", typeof(bool), false);
-      _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep };
+       _isCrossing = new ConfigurationProperty("isCrossing", typeof(bool), false);
+       _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing };
     }
 
     public string Id {
@@ -30,7 +32,13 @@ namespace BCh.KTC.TttGenerator.Config {
       set { base[_genNotCfmDep] = value; }
     }
 
-    protected override ConfigurationPropertyCollection Properties {
+        public bool IsCrossing
+        {
+            get { return (bool)base[_isCrossing]; }
+            set { base[_isCrossing] = value; }
+        }
+
+        protected override ConfigurationPropertyCollection Properties {
       get { return _properties; }
     }
   }

@@ -20,9 +20,10 @@ namespace BCh.KTC.TttGenerator {
       _advanceCmdExePeriod = advanceCmdExePeriod;
     }
 
-    public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
-        int index, DateTime currentTime, out DateTime executionTime) {
-      int delta = 0;
+        public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
+            int index, DateTime currentTime, out DateTime executionTime)
+        {
+            int delta = 0;
             if (!_controlledStations.ContainsKey(threads[index].Station))
             {
                 _logger.Error($"Configuration for station {threads[index].Station} not found!");
@@ -56,9 +57,14 @@ namespace BCh.KTC.TttGenerator {
                     delta = CalculateDefaultDelta(threads, index);
                 }
             }
-      executionTime = threads[index].ForecastTime.AddMinutes(-delta);
-      return executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
-    }
+            executionTime = threads[index].ForecastTime.AddMinutes(-delta);
+            var result = executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
+            if (!result)
+            {
+                _logger.Info($"Task -  {threads[index].ToString()} not write, because early - {executionTime.ToString()} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToString()} >= {currentTime.ToString()}");
+            }
+            return result;
+        }
 
     private int GetConfiguredTimeInterval(ControlledStation station, int intervalType, PlannedTrainRecord trainRecord) {
       foreach (var timeRecord in station.StationTimeRecords) {

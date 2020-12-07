@@ -12,7 +12,7 @@ namespace TttGenerator.Tests {
 
     private Dictionary<string, ControlledStation> GetContolledStations() {
       var controlledStations = new Dictionary<string, ControlledStation>();
-      var controlledStation = new ControlledStation("123456", true, false);
+      var controlledStation = new ControlledStation("123456", true, false, false);
       controlledStation.StationTimeRecords.Add(
         new StationTimeRecord {
           StationCode = "123456",

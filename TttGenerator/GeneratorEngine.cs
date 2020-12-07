@@ -20,7 +20,7 @@ namespace BCh.KTC.TttGenerator
         private readonly ITrainHeadersRepository _trainHeadersRepo;
         private readonly ICommandThreadsRepository _commandRepo;
         private readonly TimeSpan _prevAckPeriod; // 15 - 20 minutes
-        private readonly TimeSpan  _periodConversionExecTime; //in minutes
+        private readonly TimeSpan _periodConversionExecTime; //in minutes
 
 
         public GeneratorEngine(TimeConstraintCalculator timeConstraintCalculator,
@@ -150,7 +150,8 @@ namespace BCh.KTC.TttGenerator
 
             // 3 other train dependencies constraints
             int dependencyEventReference;
-            bool has3OtherTrainDependenciesPassed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference);
+            bool arrivalToCrossing;
+            bool has3OtherTrainDependenciesPassed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference, out arrivalToCrossing);
 
             // 6 is task generation allowed for this station / event (arr, dep)
             bool is6TaskGenAllowedForStationEvent = IsTaskGenAllowedForStationEvent(thread, index);
@@ -163,15 +164,19 @@ namespace BCh.KTC.TttGenerator
                     && has3OtherTrainDependenciesPassed
                     && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId)))
             {
-                TtTaskRecord task = CreateTask(thread[index],  (index  > 0)? thread[index -1]: null,  dependencyEventReference, executionTime);
+                TtTaskRecord task = CreateTask(thread[index], (index > 0) ? thread[index - 1] : null, dependencyEventReference, executionTime);
                 //
                 //if (IsRepeatCompletedTask(task, tasks))
                 //    task.SentFlag = 4;
+                if (arrivalToCrossing)
+                    task.SentFlag = 4;
                 _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");
             }
         }
+
+
 
         private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning)
         {
@@ -227,7 +232,7 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectType = 5;
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
-                if (prevPlannedTrainRecord !=null && 
+                if (prevPlannedTrainRecord != null &&
                     plannedTrainRecord.Station == prevPlannedTrainRecord.Station && plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis)
                     task.SentFlag = 6;
             }
@@ -241,10 +246,18 @@ namespace BCh.KTC.TttGenerator
         }
 
         private bool HaveOtherTrainDependenciesBeenPasssed(List<PlannedTrainRecord[]> allThreads,
-            PlannedTrainRecord[] thread, int index, out int dependencyEventReference)
+            PlannedTrainRecord[] thread, int index, out int dependencyEventReference, out bool arrivalToCrossing)
         {
             dependencyEventReference = -1;
             PlannedTrainRecord previousEvent = null;
+            var isCrossing = (_controlledStations.ContainsKey(thread[index].Station)) ? _controlledStations[thread[index].Station].IsCrossing : false;
+            arrivalToCrossing = (isCrossing && thread[index].EventType != 3) ? true : false;
+            if (arrivalToCrossing)
+            {
+                //если происходит прибытие на разъезд
+                return true;
+            }
+            //
             foreach (PlannedTrainRecord[] aThread in allThreads)
             {
                 if (aThread == thread) continue;
@@ -265,7 +278,7 @@ namespace BCh.KTC.TttGenerator
                     else
                     { // Depature
                         if (aThread[i].Station == thread[index].Station
-                            && aThread[i].Ndo == thread[index].Ndo)
+                            && (aThread[i].Ndo == thread[index].Ndo ||(isCrossing && i > 0 && aThread[i -1].EventType == 2 && aThread[i-1].Station == thread[index].Station && aThread[i - 1].Ndo == thread[index].Ndo)))
                         {
                             eventFound = true;
                         }
@@ -293,6 +306,10 @@ namespace BCh.KTC.TttGenerator
             {
                 dependencyEventReference = previousEvent.RecId;
                 return true;
+            }
+            else if (previousEvent.AckEventFlag == -1)
+            {
+                _logger.Info($"Task -  {thread[index].ToString()} not write, because not done event - {previousEvent.ToString()}");
             }
             return false;
         }

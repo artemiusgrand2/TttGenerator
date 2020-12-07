@@ -62,16 +62,20 @@ namespace BCh.KTC.TttGenerator {
       _logger.Info("TttGenerator stopped.");
     }
 
-    private void TimerElapsed(object sender, ElapsedEventArgs e) {
-      _timer.Enabled = false;
-      try {
-        PerformWorkingCycle();
-      }
-      catch (Exception ex) {
-        _logger.Error("An exception occurred while performing the main cycle", ex);
-      }
-      _timer.Enabled = true;
-    }
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            _timer.Enabled = false;
+            try
+            {
+                _logger.Info("New tick !!!");
+                PerformWorkingCycle();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("An exception occurred while performing the main cycle", ex);
+            }
+            _timer.Enabled = true;
+        }
 
 
     public void PerformWorkingCycle() {
