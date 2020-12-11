@@ -77,7 +77,7 @@ namespace BCh.KTC.TttGenerator {
         } else {
           objStart = trainRecord.Axis;
           objEnd = trainRecord.Ndo;
-        }
+                }
         switch (timeRecord.TimeType) {
           case 1:
           case 4:
@@ -89,7 +89,7 @@ namespace BCh.KTC.TttGenerator {
           case 3:
           case 5:
             if (timeRecord.StartObjectName == objStart
-                && timeRecord.EndObjectName == objEnd) {
+                && timeRecord.EndObjectName == objEnd && ((trainRecord.EventType != 3 && timeRecord.EndObjectType == 3) || (trainRecord.EventType == 3 && timeRecord.StartObjectType == 3))) {
               return timeRecord.TimeValue;
             }
             break;
