@@ -61,7 +61,7 @@ namespace BCh.KTC.TttGenerator {
             var result = executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
             if (!result)
             {
-                _logger.Info($"Task -  {threads[index].ToString()} not write, because early - {executionTime.ToString()} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToString()} >= {currentTime.ToString()}");
+                _logger.Info($"Task -  {threads[index].ToString()} not write, because early - {threads[index].ForecastTime.ToString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToString()} >= {currentTime.ToString()}");
             }
             return result;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using BCh.KTC.TttDal.Interfaces;
 using BCh.KTC.TttEntities;
@@ -34,16 +35,31 @@ namespace BCh.KTC.TrainNumberBinder {
       }
     }
 
-    private void ProcessExecutedHeader(TrainHeaderRecord executedHeader, List<TrainHeaderRecord> plannedHeaders) {
-      foreach (var plannedHeader in plannedHeaders) {
-        if (executedHeader.TrainNumber == plannedHeader.TrainNumber) {
-          bool requestedBinding = TryRequestingBinding(executedHeader, plannedHeader);
-          if (requestedBinding) continue;
+        private void ProcessExecutedHeader(TrainHeaderRecord executedHeader, List<TrainHeaderRecord> plannedHeaders)
+        {
+            int? beforeBindPlanedId = null;
+            if (executedHeader.PlannedTrainThreadId != 0)
+            {
+                if (plannedHeaders.Where(x => x.RecId == executedHeader.PlannedTrainThreadId && x.StateFlag == 1).FirstOrDefault() == null)
+                    return;
+                else
+                    beforeBindPlanedId = executedHeader.PlannedTrainThreadId;
+            }
+            //
+            foreach (var plannedHeader in plannedHeaders)
+            {
+                if (beforeBindPlanedId != null && beforeBindPlanedId == plannedHeader.RecId)
+                    continue;
+                //
+                if (executedHeader.TrainNumber == plannedHeader.TrainNumber)
+                {
+                    bool requestedBinding = TryRequestingBinding(executedHeader, plannedHeader, beforeBindPlanedId);
+                    if (requestedBinding) continue;
+                }
+            }
         }
-      }
-    }
 
-    private bool TryRequestingBinding(TrainHeaderRecord executedHeader, TrainHeaderRecord plannedHeader) {
+    private bool TryRequestingBinding(TrainHeaderRecord executedHeader, TrainHeaderRecord plannedHeader, int? beforeBindPlanedId) {
       var executedRecords = _passedThreadsRepository.RetrieveByHeader(executedHeader.RecId);
       var plannedRecords = _plannedThreadsRepository.RetrieveByHeader(plannedHeader.RecId);
       bool found = false;
@@ -61,7 +77,7 @@ namespace BCh.KTC.TrainNumberBinder {
         }
       }
       if (found) {
-        _logger.Info($"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}");
+        _logger.Info($"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.{((beforeBindPlanedId == null)?string.Empty: $" Before passed was binding: {beforeBindPlanedId}")}");
         _storedProceduresExecutor.BindPlannedAndPassedTrains(plannedHeader.RecId, executedHeader.RecId);
       }
       return found;
@@ -77,7 +93,7 @@ namespace BCh.KTC.TrainNumberBinder {
       var executed = new List<TrainHeaderRecord>();
       var planned = new List<TrainHeaderRecord>();
       foreach (var header in headers) {
-        if (header.StateFlag == 0 && header.PlannedTrainThreadId == 0) {
+        if (header.StateFlag == 0 /*&& header.PlannedTrainThreadId == 0*/) {
           executed.Add(header);
         } else {
           planned.Add(header);
