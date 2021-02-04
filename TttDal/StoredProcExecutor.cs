@@ -146,14 +146,16 @@ namespace BCh.KTC.TttDal {
 
 
     public void BindPlannedAndPassedTrains(int plannedTrainId, int passedTrainId) {
-      using (var con = new FbConnection(_conString)) {
-        _command2.Connection = con;
-        _parCommand2.Value = 35;
-        _parTrain_IdnH12.Value = plannedTrainId;
-        _parTrain_IdnH22.Value = passedTrainId;
-        con.Open();
-        _command2.ExecuteNonQuery();
-      }
+            using (var con = new FbConnection(_conString))
+            {
+                _command2.Connection = con;
+                _parCommand2.Value = 35;
+                _parTrain_IdnH12.Value = plannedTrainId;
+                _parTrain_IdnH22.Value = passedTrainId;
+                _parEV_FLAGE22.Value = 50;
+                con.Open();
+                _command2.ExecuteNonQuery();
+            }
     }
   }
 }

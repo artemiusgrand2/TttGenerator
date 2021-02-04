@@ -21,7 +21,7 @@ namespace BCh.KTC.TttGenerator {
     }
 
         public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
-            int index, DateTime currentTime, out DateTime executionTime)
+            int index, DateTime currentTime, out DateTime executionTime, TimeSpan deltaPlanExecuted)
         {
             int delta = 0;
             if (!_controlledStations.ContainsKey(threads[index].Station))
@@ -57,12 +57,19 @@ namespace BCh.KTC.TttGenerator {
                     delta = CalculateDefaultDelta(threads, index);
                 }
             }
-            executionTime = threads[index].ForecastTime.AddMinutes(-delta);
+            //
+            var forecastTime = threads[index].GetForecastTime2(deltaPlanExecuted);
+            //
+            executionTime = forecastTime.AddMinutes(-delta);
             var result = executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
             if (!result)
             {
-                _logger.Info($"Task -  {threads[index].ToString()} not write, because early - {threads[index].ForecastTime.ToString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToString()} >= {currentTime.ToString()}");
+                _logger.Info($"Task -  {threads[index].ToString()} not write, because early .({threads[index].ForecastTime.ToLongTimeString()}) - {deltaPlanExecuted.Hours}:{deltaPlanExecuted.Minutes}:{deltaPlanExecuted.Seconds} . {forecastTime.ToLongTimeString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToLongTimeString()} >= {currentTime.ToLongTimeString()}");
             }
+            //else
+            //{
+            //    _logger.Info($"Task -  {threads[index].ToString()} RunCom .({threads[index].ForecastTime.ToLongTimeString()}) - {deltaPlanExecuted.Hours}:{deltaPlanExecuted.Minutes}:{deltaPlanExecuted.Seconds} . {forecastTime.ToLongTimeString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToLongTimeString()} >= {currentTime.ToLongTimeString()}");
+            //}
             return result;
         }
 

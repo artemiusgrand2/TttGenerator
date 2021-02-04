@@ -124,7 +124,8 @@ namespace BCh.KTC.TttGenerator
             }
             // 0 (4)- is the thread identified (bound; are there any ack events)
             DateTime lastAckEventOrBeginning;
-            bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning);
+            TimeSpan deltaPlanExecuted;
+            bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning, out deltaPlanExecuted);
 
             // 1.1 has prev task been executed?
             bool has11PrevTaskBeenExecuted = false;
@@ -137,10 +138,10 @@ namespace BCh.KTC.TttGenerator
                 }
             }
             // 1.2 self dependency constraints - has prev event been executed?
-            bool has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index);
+            bool has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index, deltaPlanExecuted);
 
             // 2 time constraints
-            bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+            bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime, deltaPlanExecuted);
 
             if (lastAckEventOrBeginning + _prevAckPeriod < executionTime)
             {
@@ -178,14 +179,16 @@ namespace BCh.KTC.TttGenerator
 
 
 
-        private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning)
+        private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
         {
             lastAckEventOrBeginning = new DateTime();
+            deltaPlanExecuted = new TimeSpan();
             for (int i = thread.Length - 1; i >= 0; --i)
             {
                 lastAckEventOrBeginning = thread[i].ForecastTime;
                 if (thread[i].AckEventFlag == 2)
                 {
+                    deltaPlanExecuted = (thread[i].ForecastTime - thread[i].PlannedTime);
                     return true;
                 }
             }
@@ -206,10 +209,10 @@ namespace BCh.KTC.TttGenerator
             return _controlledStations[threads[index].Station].AllowGeneratingNotCfmArrival;
         }
 
-        private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)
-        {
-            return threads[index].ForecastTime - threads[0].ForecastTime < _prevAckPeriod;
-        }
+        //private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)
+        //{
+        //    return threads[index].ForecastTime - threads[0].ForecastTime < _prevAckPeriod;
+        //}
 
         private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, PlannedTrainRecord prevPlannedTrainRecord,
             int dependecyEventReference,
@@ -315,12 +318,12 @@ namespace BCh.KTC.TttGenerator
         }
 
 
-        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index)
+        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted)
         {
             int i = index;
             while (--i >= 0)
             {
-                if (thread[index].ForecastTime - thread[i].ForecastTime < _prevAckPeriod)
+                if (thread[index].GetForecastTime2(deltaPlanExecuted) - thread[i].GetForecastTime2(deltaPlanExecuted) < _prevAckPeriod)
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
