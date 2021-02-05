@@ -145,14 +145,15 @@ namespace BCh.KTC.TttDal {
     }
 
 
-    public void BindPlannedAndPassedTrains(int plannedTrainId, int passedTrainId) {
+    public void BindPlannedAndPassedTrains(int plannedTrainId, int passedTrainId, string trainNumber, int flagPro) {
             using (var con = new FbConnection(_conString))
             {
                 _command2.Connection = con;
                 _parCommand2.Value = 35;
                 _parTrain_IdnH12.Value = plannedTrainId;
                 _parTrain_IdnH22.Value = passedTrainId;
-                _parEV_FLAGE22.Value = 50;
+                _parTrain_NumH12.Value = trainNumber;
+                _parEV_FLAGE22.Value = flagPro;
                 con.Open();
                 _command2.ExecuteNonQuery();
             }

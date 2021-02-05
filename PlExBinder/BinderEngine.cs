@@ -40,25 +40,29 @@ namespace BCh.KTC.PlExBinder {
       FormDeferredTasks(plannedRecords);
     }
 
-    private void ExecuteDeferredTasks(DateTime executionTime) {
-      _deferredTaskStorage.CleanUpOldTask(executionTime.AddMinutes(-_config.DeferredTimeLifespan));
-      CleanUpBoundTasks();
+        private void ExecuteDeferredTasks(DateTime executionTime)
+        {
+            _deferredTaskStorage.CleanUpOldTask(executionTime.AddMinutes(-_config.DeferredTimeLifespan));
+            CleanUpBoundTasks();
 
-      // execution itself
-      var tasks = _deferredTaskStorage.GetDeferredTasks();
-      foreach (var task in tasks) {
-        List<PassedTrainRecord> candidates = _passedThreadsRepository.RetrievePassedTrainRecords(
-          task.EventStation, task.NeighbourStationCode, task.EventType == 2,
-          task.PlannedTime.AddMinutes(-_config.SearchThresholdBeforePlannedTask),
-          executionTime.AddMinutes(-_config.SearchThresholdBeforeCurrentTime));
-        if (candidates.Count > 0) {
-          var lastCandidateId = candidates.Last().TrainId;
-          _storedProceduresExecutor.BindPlannedAndPassedTrains(task.TrainId, lastCandidateId);
-          task.HasBindingCmdBeenGenerated = true;
-          _logger.Info(string.Format("Binding - planned: {0} and passed: {1}", task.TrainId, lastCandidateId));
+            // execution itself
+            var tasks = _deferredTaskStorage.GetDeferredTasks();
+            foreach (var task in tasks)
+            {
+                List<PassedTrainRecord> candidates = _passedThreadsRepository.RetrievePassedTrainRecords(
+                  task.EventStation, task.NeighbourStationCode, task.EventType == 2,
+                  task.PlannedTime.AddMinutes(-_config.SearchThresholdBeforePlannedTask),
+                  executionTime.AddMinutes(-_config.SearchThresholdBeforeCurrentTime));
+                if (candidates.Count > 0)
+                {
+                    var lastCandidateId = candidates.Last().TrainId;
+                    var trainNumber = _trainHeadersRepository.GetTrainNumberByTrainId(task.TrainId);
+                    _storedProceduresExecutor.BindPlannedAndPassedTrains(task.TrainId, lastCandidateId, trainNumber, 50);
+                    task.HasBindingCmdBeenGenerated = true;
+                    _logger.Info($"Binding - planned: {task.TrainId} and passed: {lastCandidateId}. TrainNumber - {trainNumber}");
+                }
+            }
         }
-      }
-    }
 
 
     private void CleanUpBoundTasks() {

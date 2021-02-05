@@ -78,7 +78,7 @@ namespace BCh.KTC.TrainNumberBinder {
       }
       if (found) {
         _logger.Info($"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.{((beforeBindPlanedId == null)?string.Empty: $" Before passed was binding: {beforeBindPlanedId}")}");
-        _storedProceduresExecutor.BindPlannedAndPassedTrains(plannedHeader.RecId, executedHeader.RecId);
+        _storedProceduresExecutor.BindPlannedAndPassedTrains(plannedHeader.RecId, executedHeader.RecId, executedHeader.TrainNumber, 51);
       }
       return found;
     }

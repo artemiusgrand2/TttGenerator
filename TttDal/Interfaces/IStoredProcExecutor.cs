@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace BCh.KTC.TttDal.Interfaces {
   public interface IStoredProcExecutor {
-    void BindPlannedAndPassedTrains(int plannedTrainId, int passedTrainId);
+    void BindPlannedAndPassedTrains(int plannedTrainId, int passedTrainId, string trainNumber, int flagPro);
   }
 }
