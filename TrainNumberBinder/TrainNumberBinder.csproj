@@ -49,6 +49,7 @@
     <Compile Include="BinderEngine.cs" />
     <Compile Include="Config\BinderConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReasonReBinding.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="log4netTrNumBinder.xml">

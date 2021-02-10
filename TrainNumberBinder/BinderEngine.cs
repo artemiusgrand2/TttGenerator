@@ -38,28 +38,40 @@ namespace BCh.KTC.TrainNumberBinder {
         private void ProcessExecutedHeader(TrainHeaderRecord executedHeader, List<TrainHeaderRecord> plannedHeaders)
         {
             int? beforeBindPlanedId = null;
+            var reasonReBinding = ReasonReBinding.none;
             if (executedHeader.PlannedTrainThreadId != 0)
             {
-                if (plannedHeaders.Where(x => x.RecId == executedHeader.PlannedTrainThreadId && x.StateFlag == 1).FirstOrDefault() == null)
-                    return;
-                else
+                var findPlanHeader = plannedHeaders.Where(x => x.RecId == executedHeader.PlannedTrainThreadId).FirstOrDefault();
+                if (findPlanHeader == null || (findPlanHeader != null && findPlanHeader.StateFlag == 1))
+                {
+                    if (findPlanHeader == null)
+                        reasonReBinding = ReasonReBinding.deletePlan;
+                    else
+                        reasonReBinding = ReasonReBinding.flag1;
                     beforeBindPlanedId = executedHeader.PlannedTrainThreadId;
+                }
+                else
+                    return;
+                //if (plannedHeaders.Where(x => x.RecId == executedHeader.PlannedTrainThreadId && x.StateFlag == 1).FirstOrDefault() == null)
+                //    return;
+                //else
+                //    beforeBindPlanedId = executedHeader.PlannedTrainThreadId;
             }
             //
-            foreach (var plannedHeader in plannedHeaders)
+            foreach (var plannedHeader in plannedHeaders.Where(x=>x.StateFlag == 1))
             {
                 if (beforeBindPlanedId != null && beforeBindPlanedId == plannedHeader.RecId)
                     continue;
                 //
                 if (executedHeader.TrainNumber == plannedHeader.TrainNumber)
                 {
-                    bool requestedBinding = TryRequestingBinding(executedHeader, plannedHeader, beforeBindPlanedId);
+                    bool requestedBinding = TryRequestingBinding(executedHeader, plannedHeader, beforeBindPlanedId, reasonReBinding);
                     if (requestedBinding) continue;
                 }
             }
         }
 
-    private bool TryRequestingBinding(TrainHeaderRecord executedHeader, TrainHeaderRecord plannedHeader, int? beforeBindPlanedId) {
+    private bool TryRequestingBinding(TrainHeaderRecord executedHeader, TrainHeaderRecord plannedHeader, int? beforeBindPlanedId, ReasonReBinding reasonReBinding) {
       var executedRecords = _passedThreadsRepository.RetrieveByHeader(executedHeader.RecId);
       var plannedRecords = _plannedThreadsRepository.RetrieveByHeader(plannedHeader.RecId);
       bool found = false;
@@ -77,11 +89,24 @@ namespace BCh.KTC.TrainNumberBinder {
         }
       }
       if (found) {
-        _logger.Info($"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.{((beforeBindPlanedId == null)?string.Empty: $" Before passed was binding: {beforeBindPlanedId}")}");
+                _logger.Info($"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.{((beforeBindPlanedId == null) ? string.Empty : $" Before passed was binding: {beforeBindPlanedId}. {GetStrReasonReBinding(reasonReBinding)}")}");
         _storedProceduresExecutor.BindPlannedAndPassedTrains(plannedHeader.RecId, executedHeader.RecId, executedHeader.TrainNumber, 51);
       }
       return found;
     }
+
+        private string GetStrReasonReBinding(ReasonReBinding reasonReBinding)
+        {
+            switch (reasonReBinding)
+            {
+                case ReasonReBinding.deletePlan:
+                    return "Delete planHeader.";
+                case ReasonReBinding.flag1:
+                    return "In planHeader flag = 1";
+                default:
+                    return string.Empty;
+            }
+        }
 
     private bool IsTimeDiffWithinDelta(DateTime time1, DateTime time2) {
       TimeSpan delta = (time1 > time2) ? time1 - time2 : time2 - time1;

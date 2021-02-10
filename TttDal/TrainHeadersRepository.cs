@@ -14,7 +14,7 @@ namespace BCh.KTC.TttDal {
     // (TRAIN_NUM <> '' OR TRAIN_NUM is null) - and not having train numbers
     private const string SelectNotBound =
       "SELECT TRAIN_IDN, NORM_IDN, TRAIN_NUM, FL_SOST FROM TTRAINHEADERS"
-      + " WHERE (TRAIN_NUM <> '' OR TRAIN_NUM is null) AND ((FL_SOST is null AND (NORM_IDN = 0 or NORM_IDN is null or NORM_IDN > 0)) OR (FL_SOST = 1))"
+      + " WHERE (TRAIN_NUM <> '' OR TRAIN_NUM is null) AND ((FL_SOST is null AND (NORM_IDN = 0 or NORM_IDN is null or NORM_IDN > 0)) OR (FL_SOST = 1 OR FL_SOST = 2))"
       + " ORDER BY FL_SOST";
 
 
