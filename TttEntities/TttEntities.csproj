@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseRecord.cs" />
+    <Compile Include="Enums\CategoryTrain.cs" />
     <Compile Include="StationTimeRecord.cs" />
     <Compile Include="DeferredTask.cs" />
     <Compile Include="Enums\RecordState.cs" />

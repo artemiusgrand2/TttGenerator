@@ -17,25 +17,32 @@ namespace BCh.KTC.PlExBinder {
     private readonly IStoredProcExecutor _storedProceduresExecutor;
     private readonly IDeferredTaskStorage _deferredTaskStorage;
     private readonly BinderConfigDto _config;
+        private readonly IList<string> _trainsNumber;
 
 
-    public BinderEngine(IPlannedThreadsRepository plannedThreadsRepository,
-        IPassedThreadsRepository passedThreadsRepository,
-        ITrainHeadersRepository trainHeadersRepository,
-        IStoredProcExecutor storedProceduresExecutor,
-        IDeferredTaskStorage deferredTaskStorage,
-        BinderConfigDto config) {
-      _plannedThreadsRepository = plannedThreadsRepository;
-      _passedThreadsRepository = passedThreadsRepository;
-      _trainHeadersRepository = trainHeadersRepository;
-      _storedProceduresExecutor = storedProceduresExecutor;
-      _deferredTaskStorage = deferredTaskStorage;
-      _config = config;
-    }
+        public BinderEngine(IPlannedThreadsRepository plannedThreadsRepository,
+            IPassedThreadsRepository passedThreadsRepository,
+            ITrainHeadersRepository trainHeadersRepository,
+            IStoredProcExecutor storedProceduresExecutor,
+            IDeferredTaskStorage deferredTaskStorage,
+            BinderConfigDto config,
+            IList<string> trainsNumber
+            )
+        {
+            _plannedThreadsRepository = plannedThreadsRepository;
+            _passedThreadsRepository = passedThreadsRepository;
+            _trainHeadersRepository = trainHeadersRepository;
+            _storedProceduresExecutor = storedProceduresExecutor;
+            _deferredTaskStorage = deferredTaskStorage;
+            _config = config;
+            _trainsNumber = trainsNumber;
+        }
 
     public void ExecuteBindingCycle(DateTime executionTime) {
       ExecuteDeferredTasks(executionTime);
       List<PlannedTrainRecord> plannedRecords = _plannedThreadsRepository.RetrievePlannedThreads(executionTime);
+            if (_trainsNumber.Count > 0)
+                plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber)).ToList();
       plannedRecords = FilterOutAlreadyDefinedInDeferredTasks(plannedRecords);
       FormDeferredTasks(plannedRecords);
     }
@@ -96,8 +103,8 @@ namespace BCh.KTC.PlExBinder {
           HasBindingCmdBeenGenerated = false
         };
         _deferredTaskStorage.AddTask(deferredTask);
-        _logger.InfoFormat("A deferred task created (id: {0}; trId: {1}; type: {2}; station: {3}",
-          record.RecId, record.TrainId, record.EventType, record.Station);
+        _logger.InfoFormat("A deferred task created (id: {0}; trId: {1}; type: {2}; station: {3};  trainNumber {4}",
+          record.RecId, record.TrainId, record.EventType, record.Station, record.TrainNumber);
       }
     }
 

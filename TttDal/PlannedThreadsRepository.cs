@@ -9,7 +9,7 @@ namespace BCh.KTC.TttDal {
     private const string SelectCmdTxt = "SELECT"
     + "    RR.EV_REC_IDN, RR.TRAIN_IDN, RR.EV_TYPE, RR.EV_TIME, RR.EV_TIME_P,"
     + "    RR.EV_STATION, RR.EV_AXIS, RR.EV_NDO, RR.EV_NE_STATION, RR.EV_CNFM,"
-    + "    RR.LNKE_REC_IDN, RR.FL_DEF"
+    + "    RR.LNKE_REC_IDN, RR.FL_DEF, RR.TRAIN_NUM"
     + " FROM (SELECT TRAIN_IDN, MAX(EV_TIME_p) as MaxTime"
     + "        FROM TGRAPHICPL"
     + "        WHERE EV_TIME_P < @untilTime"
@@ -17,7 +17,7 @@ namespace BCh.KTC.TttDal {
     + " INNER JOIN(SELECT"
     + "    P.EV_REC_IDN, P.TRAIN_IDN, P.EV_TYPE, P.EV_TIME, P.EV_TIME_P,"
     + "    P.EV_STATION, P.EV_AXIS, P.EV_NDO, P.EV_NE_STATION, P.EV_CNFM,"
-    + "    P.LNKE_REC_IDN, P.FL_DEF"
+    + "    P.LNKE_REC_IDN, P.FL_DEF, H.TRAIN_NUM"
     + "            FROM TGRAPHICPL AS P"
     + "            INNER JOIN TTRAINHEADERS AS H"
     + "            ON H.TRAIN_IDN = P.TRAIN_IDN"
@@ -116,6 +116,7 @@ namespace BCh.KTC.TttDal {
                             NeighbourStationCode = dbReader.GetStringSafely(8), // ev_ne_station
                                                                                 //AckEventFlag { get; set; } // ev_cnfm: 2 - the event has been acknoledged
                             AckEventFlag = dbReader.GetInt16Safely(9),
+                            TrainNumber = dbReader.GetStringSafely(12)
                             //PlannedEventReference { get; set; } // lnke_rec_idn
                             //AutopilotState { get; set; } // fl_def
                         };
