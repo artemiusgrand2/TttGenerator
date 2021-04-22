@@ -5,7 +5,9 @@ namespace BCh.KTC.TttGenerator.Config {
     private static readonly ConfigurationProperty _id;
     private static readonly ConfigurationProperty _genNotCfmArr;
     private static readonly ConfigurationProperty _genNotCfmDep;
-        private static readonly ConfigurationProperty _isCrossing;
+    private static readonly ConfigurationProperty _isCrossing;
+    private static readonly ConfigurationProperty _isGidControl;
+    private static readonly ConfigurationProperty _isControl;
     private static readonly ConfigurationPropertyCollection _properties;
 
     static ControlledStationElement() {
@@ -14,7 +16,9 @@ namespace BCh.KTC.TttGenerator.Config {
       _genNotCfmArr = new ConfigurationProperty("genNotCfmArr", typeof(bool), false);
       _genNotCfmDep = new ConfigurationProperty("genNotCfmDep", typeof(bool), false);
        _isCrossing = new ConfigurationProperty("isCrossing", typeof(bool), false);
-       _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing };
+      _isGidControl = new ConfigurationProperty("isGidControl", typeof(bool), true);
+       _isControl = new ConfigurationProperty("isControl", typeof(bool), true);
+       _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing, _isGidControl, _isControl };
     }
 
     public string Id {
@@ -36,6 +40,18 @@ namespace BCh.KTC.TttGenerator.Config {
         {
             get { return (bool)base[_isCrossing]; }
             set { base[_isCrossing] = value; }
+        }
+
+        public bool IsGidControl
+        {
+            get { return (bool)base[_isGidControl]; }
+            set { base[_isGidControl] = value; }
+        }
+
+        public bool IsControl
+        {
+            get { return (bool)base[_isControl]; }
+            set { base[_isControl] = value; }
         }
 
         protected override ConfigurationPropertyCollection Properties {

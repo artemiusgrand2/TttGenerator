@@ -23,24 +23,24 @@
     /// the contents of this method with the code editor.
     /// </summary>
     private void InitializeComponent() {
-      this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
-      this.serviceInstaller1 = new System.ServiceProcess.ServiceInstaller();
-      // 
-      // serviceProcessInstaller1
-      // 
-      this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
-      this.serviceProcessInstaller1.Password = null;
-      this.serviceProcessInstaller1.Username = null;
-      // 
-      // serviceInstaller1
-      // 
-      this.serviceInstaller1.Description = "Binds planned and passed (executed) train threads by their train numbers.";
-      this.serviceInstaller1.DisplayName = "TrainNumberBinder";
-      this.serviceInstaller1.ServiceName = "Service1";
-      // 
-      // ProjectInstaller
-      // 
-      this.Installers.AddRange(new System.Configuration.Install.Installer[] {
+            this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
+            this.serviceInstaller1 = new System.ServiceProcess.ServiceInstaller();
+            // 
+            // serviceProcessInstaller1
+            // 
+            this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
+            this.serviceProcessInstaller1.Password = null;
+            this.serviceProcessInstaller1.Username = null;
+            // 
+            // serviceInstaller1
+            // 
+            this.serviceInstaller1.Description = "Binds planned and passed (executed) train threads by their train numbers.";
+            this.serviceInstaller1.DisplayName = "TrainNumberBinder";
+            this.serviceInstaller1.ServiceName = "TrainNumberBinder";
+            // 
+            // ProjectInstaller
+            // 
+            this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.serviceProcessInstaller1,
             this.serviceInstaller1});
 

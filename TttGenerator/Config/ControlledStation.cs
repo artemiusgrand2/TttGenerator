@@ -6,14 +6,18 @@ namespace BCh.KTC.TttGenerator.Config {
     public string StationCode { get; private set; }
     public bool AllowGeneratingNotCfmArrival { get; private set; }
     public bool AllowGeneratingNotCfmDeparture { get; private set; }
-    public bool IsCrossing { get; private set; }
+    public bool IsGidColtrol { get; private set; }
+        public bool IsCrossing { get; private set; }
+        public bool IsConstol { get; private set; }
         public List<StationTimeRecord> StationTimeRecords { get; private set; }
 
-    public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing) {
+    public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing, bool isGidColtrol, bool isConstol) {
       StationCode = stationCode;
       AllowGeneratingNotCfmArrival = allowGenNotCfmArr;
       AllowGeneratingNotCfmDeparture = allowGenNotCnfDep;
       IsCrossing = isCrossing;
+      IsGidColtrol = isGidColtrol;
+      IsConstol = isConstol;
       StationTimeRecords = new List<StationTimeRecord>();
     }
   }
