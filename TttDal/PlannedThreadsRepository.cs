@@ -163,6 +163,9 @@ namespace BCh.KTC.TttDal {
             if (record.Station.Length == 8) {
               record.Station = record.Station.Substring(2, 6);
             }
+            if (record.NeighbourStationCode.Length == 8) {
+              record.NeighbourStationCode = record.NeighbourStationCode.Substring(2, 6);
+            }
             records.Add(record);
           }
         }

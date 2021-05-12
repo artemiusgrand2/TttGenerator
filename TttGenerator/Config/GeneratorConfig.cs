@@ -49,7 +49,7 @@ namespace BCh.KTC.TttGenerator.Config {
 
       var controlledStations = new Dictionary<string, ControlledStation>();
       foreach (ControlledStationElement station in engineSection.ControlledStations) {
-        var controlledStation = new ControlledStation(station.Id, station.AllowGeneratingNotCfmArrival, station.AllowGeneratingNotCfmDeparture, station.IsCrossing, station.IsGidControl, station.IsControl);
+        var controlledStation = new ControlledStation(station.Id, station.AllowGeneratingNotCfmArrival, station.AllowGeneratingNotCfmDeparture, station.IsCrossing, station.IsGidControl, station.IsControl, station.ListStNotDep);
         controlledStations[station.Id] = controlledStation;
       }
 

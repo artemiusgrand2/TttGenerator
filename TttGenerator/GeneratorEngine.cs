@@ -85,7 +85,7 @@ namespace BCh.KTC.TttGenerator
         private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime)
         {
             // -2 checking whether the station is controlled
-            if (!_controlledStations.ContainsKey(thread[index].Station) || (_controlledStations.ContainsKey(thread[index].Station) && !_controlledStations[thread[index].Station].IsConstol))
+            if (!_controlledStations.ContainsKey(thread[index].Station) /* || (_controlledStations.ContainsKey(thread[index].Station) && !_controlledStations[thread[index].Station].IsConstol)*/)
             {
                 //_logger.Debug("Not processing - station not controlled. " + threads[index].ToString());
                 if (++index < thread.Length)
@@ -94,7 +94,15 @@ namespace BCh.KTC.TttGenerator
                 }
                 return;
             }
-
+            //
+            if(thread[index].EventType == 3 && _controlledStations[thread[index].Station].ListStNotDep.Contains(thread[index].NeighbourStationCode))
+            {
+                if (++index < thread.Length)
+                {
+                    ProcessThread(allThreads, thread, index, tasks, currentTime);
+                }
+                return;
+            }
             // -1 checking already issued tasks
             var existingTask = FindIssuedTask(thread[index].RecId, tasks);
             DateTime executionTime;
@@ -273,9 +281,8 @@ namespace BCh.KTC.TttGenerator
                     { // Arrival
                         if (aThread[i].Station == thread[index].Station
                             && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo) ||
-                            (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station) || 
-                            (_controlledStations.ContainsKey(thread[index - 1].Station) && !_controlledStations[thread[index - 1].Station].IsConstol && !_controlledStations[thread[index - 1].Station].IsGidColtrol))))
-                             /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/)))
+                            (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))
+                             /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/))
                         {
                             eventFound = true;
                         }

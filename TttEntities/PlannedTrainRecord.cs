@@ -21,7 +21,7 @@ namespace BCh.KTC.TttEntities
 
         public override string ToString()
         {
-            return string.Format($"{TrainId} st:{Station} a:{Axis} ndo:{Ndo} pt:{PlannedTime.ToShortTimeString()}");
+            return string.Format($"{TrainId} st:{Station} a:{Axis} ndo:{Ndo} {((EventType == 3)?"dep":"arr")} pt:{PlannedTime.ToShortTimeString()}");
         }
 
         public DateTime GetForecastTime2(TimeSpan deltaPlanExecuted)

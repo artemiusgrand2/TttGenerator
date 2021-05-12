@@ -101,11 +101,11 @@ namespace BCh.KTC.TttGenerator {
             }
             break;
           default:
-            _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode}");
+            _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode} {trainRecord.ToString()}");
             break;
         }
       }
-      _logger.Warn($"No time record is found for {station} and interval type: {intervalType}");
+      _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString()}");
       return 0;
     }
 
