@@ -5,6 +5,7 @@ using BCh.KTC.TttGenerator.Services;
 using log4net;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
 namespace BCh.KTC.TttGenerator
@@ -244,7 +245,7 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
                 if (prevPlannedTrainRecord != null &&
-                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis)
+                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis))
                     task.SentFlag = 6;
             }
             //
@@ -254,6 +255,23 @@ namespace BCh.KTC.TttGenerator
             task.DependencyEventReference = dependecyEventReference;
             task.TrainNumber = _trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId);
             return task;
+        }
+
+        private bool EqualsAxis(string axis1, string axis2)
+        {
+            var patternAxis = @"^([0-9]+)(.*)$";
+            var match1 = Regex.Match(axis1, patternAxis);
+            if (match1.Success)
+            {
+                var match2 = Regex.Match(axis2, patternAxis);
+                if (match2.Success)
+                {
+                    if (match1.Groups.Count > 1 && match2.Groups.Count > 1)
+                        return (match1.Groups[1].Value == match2.Groups[1].Value);
+                }
+            }
+            //
+            return (axis1 == axis2);
         }
 
         private bool HaveOtherTrainDependenciesBeenPasssed(List<PlannedTrainRecord[]> allThreads,
