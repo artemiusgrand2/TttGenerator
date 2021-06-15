@@ -58,7 +58,8 @@ namespace BCh.KTC.TttGenerator
                 int i = GetIndexOfLastNotConfirmedRecord(thread);
                 if (i != thread.Length)
                 {
-                    ProcessThread(plannedThreads, thread, i, issuedTasks, currentTime);
+                   // var delElexistingTask = false;
+                    ProcessThread(plannedThreads, thread, i, issuedTasks, currentTime/*, ref delElexistingTask*/);
                 }
             }
         }
@@ -83,15 +84,14 @@ namespace BCh.KTC.TttGenerator
         }
 
 
-        private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime)
+        private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime/*,ref bool delElexistingTask*/)
         {
             // -2 checking whether the station is controlled
-            if (!_controlledStations.ContainsKey(thread[index].Station) /* || (_controlledStations.ContainsKey(thread[index].Station) && !_controlledStations[thread[index].Station].IsConstol)*/)
+            if (!_controlledStations.ContainsKey(thread[index].Station))
             {
-                //_logger.Debug("Not processing - station not controlled. " + threads[index].ToString());
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
                 }
                 return;
             }
@@ -100,7 +100,7 @@ namespace BCh.KTC.TttGenerator
             {
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
                 }
                 return;
             }
@@ -109,25 +109,39 @@ namespace BCh.KTC.TttGenerator
             DateTime executionTime;
             if (existingTask != null)
             {
-                if (existingTask.SentFlag != 4)
-                {
-                    _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString());
-                    //conversion execTime
-                    //if(existingTask.SentFlag != 5 && existingTask.SentFlag != 6)
-                    //{
-                    //    _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
-                    //    if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
-                    //    {
-                    //        _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
-                    //        _logger.Debug($"Update executionTime. New time - {executionTime.ToShortDateString()} {executionTime.ToShortTimeString()} - " + thread[index].ToString());
-                    //    }
-                    //}
-                    //
-                    return;
-                }
+                //int dependencyEventReferenceBuff = -1;
+                //bool arrivalToCrossingBuff;
+                //if (delElexistingTask || !HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReferenceBuff, out arrivalToCrossingBuff))
+                //{
+                //    _taskRepo.RemoveTtTask(existingTask.RecId);
+                //    _logger.Info($"Task removed: : {existingTask.PlannedEventReference} - {existingTask.Station}, {existingTask.RouteStartObjectType}:{existingTask.RouteStartObjectName}, " +
+                //        $"{existingTask.RouteEndObjectType}:{existingTask.RouteEndObjectName}, " +
+                //        $" because not done event with id - {dependencyEventReferenceBuff}.");
+                //    delElexistingTask = true;
+                //}
+                //else
+                //{
+                    if (existingTask.SentFlag != 4)
+                    {
+                    _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString());// /*+ $"{((existingTask.SentFlag == 7) ? " command for autonom station - without doing." : string.Empty)}")*/;
+                        //conversion execTime
+                        //if(existingTask.SentFlag != 5 && existingTask.SentFlag != 6)
+                        //{
+                        //    _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
+                        //    if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
+                        //    {
+                        //        _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
+                        //        _logger.Debug($"Update executionTime. New time - {executionTime.ToShortDateString()} {executionTime.ToShortTimeString()} - " + thread[index].ToString());
+                        //    }
+                        //}
+                        //
+                        return;
+                    }
+             //   }
+                //
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
                 }
                 return;
             }
@@ -156,8 +170,6 @@ namespace BCh.KTC.TttGenerator
             {
                 return;
             }
-
-
             // 3 other train dependencies constraints
             int dependencyEventReference;
             bool arrivalToCrossing;
@@ -180,13 +192,14 @@ namespace BCh.KTC.TttGenerator
                 //    task.SentFlag = 4;
                 if (arrivalToCrossing)
                     task.SentFlag = 4;
+                //autonom station
+                if (IsAutonomousForStationEvent(thread, index))
+                    task.SentFlag = 4;
                 _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");
             }
         }
-
-
 
         private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
         {
@@ -216,6 +229,16 @@ namespace BCh.KTC.TttGenerator
                 return _controlledStations[threads[index].Station].AllowGeneratingNotCfmDeparture;
             }
             return _controlledStations[threads[index].Station].AllowGeneratingNotCfmArrival;
+        }
+
+        private bool IsAutonomousForStationEvent(PlannedTrainRecord[] threads, int index)
+        {
+            if (!_controlledStations.ContainsKey(threads[index].Station))
+            {
+                return false;
+            }
+            //
+            return _controlledStations[threads[index].Station].Autonomous;
         }
 
         //private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)
@@ -304,10 +327,6 @@ namespace BCh.KTC.TttGenerator
                         {
                             eventFound = true;
                         }
-                        //else if()
-                        //{
-
-                        //}
                     }
                     else
                     { // Depature
@@ -358,6 +377,7 @@ namespace BCh.KTC.TttGenerator
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
+                        if(thread[i].AckEventFlag != -1)
                         return true;
                     }
                 }

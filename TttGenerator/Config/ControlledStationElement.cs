@@ -7,10 +7,9 @@ namespace BCh.KTC.TttGenerator.Config {
     private static readonly ConfigurationProperty _genNotCfmArr;
     private static readonly ConfigurationProperty _genNotCfmDep;
     private static readonly ConfigurationProperty _isCrossing;
-    private static readonly ConfigurationProperty _isGidControl;
-    private static readonly ConfigurationProperty _isControl;
     private static readonly ConfigurationProperty _listStNotDep;
-    private static readonly ConfigurationPropertyCollection _properties;
+    private static readonly ConfigurationPropertyCollection _properties; 
+    private static readonly ConfigurationProperty _autonomous;
 
         static ControlledStationElement()
         {
@@ -19,10 +18,9 @@ namespace BCh.KTC.TttGenerator.Config {
             _genNotCfmArr = new ConfigurationProperty("genNotCfmArr", typeof(bool), false);
             _genNotCfmDep = new ConfigurationProperty("genNotCfmDep", typeof(bool), false);
             _isCrossing = new ConfigurationProperty("isCrossing", typeof(bool), false);
-            _isGidControl = new ConfigurationProperty("isGidControl", typeof(bool), true);
-            _isControl = new ConfigurationProperty("isControl", typeof(bool), true);
+            _autonomous = new ConfigurationProperty("Autonomous", typeof(bool), false);
             _listStNotDep =  new ConfigurationProperty("ListStNotDep", typeof(string), string.Empty);
-            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing, _isGidControl, _isControl, _listStNotDep };
+            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing,  _listStNotDep, _autonomous };
         }
 
     public string Id {
@@ -46,22 +44,16 @@ namespace BCh.KTC.TttGenerator.Config {
             set { base[_isCrossing] = value; }
         }
 
-        public bool IsGidControl
-        {
-            get { return (bool)base[_isGidControl]; }
-            set { base[_isGidControl] = value; }
-        }
-
-        public bool IsControl
-        {
-            get { return (bool)base[_isControl]; }
-            set { base[_isControl] = value; }
-        }
-
         public string ListStNotDep
         {
             get { return base[_listStNotDep] as string; }
             set { base[_listStNotDep] = value; }
+        }
+
+        public bool Autonomous
+        {
+            get { return (bool)base[_autonomous]; }
+            set { base[_autonomous] = value; }
         }
 
         protected override ConfigurationPropertyCollection Properties {

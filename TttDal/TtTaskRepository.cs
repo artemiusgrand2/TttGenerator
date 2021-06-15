@@ -21,12 +21,16 @@ namespace BCh.KTC.TttDal {
         private const string UpdateExecTimeCmdText = "UPDATE TCOMDEFINITIONS"
     + " SET TM_DEF_START = @execTime, FL_SND = 0"
     + " WHERE DEF_IDN = @defIdn";
-    private readonly string _conString;
+        private const string RemoveCmdText = "DELETE"
+    + " FROM TCOMDEFINITIONS"
+    + " WHERE DEF_IDN = @taskId";
+        private readonly string _conString;
     private readonly FbCommand _selectCmd;
     private readonly FbCommand _insertCmd;
     private readonly FbCommand _updateExecTimeCmd;
+        private readonly FbCommand _removeCmd;
 
-    private readonly FbParameter _parStation;
+        private readonly FbParameter _parStation;
     private readonly FbParameter _parTrainNumber;
     private readonly FbParameter _parStartObjType;
     private readonly FbParameter _parStartObjName;
@@ -41,6 +45,7 @@ namespace BCh.KTC.TttDal {
         private readonly FbParameter _parExecTimeUpdate;
         private readonly FbParameter _parDefIdnUpdate;
 
+        private readonly FbParameter _parTaskId;
 
         public TtTaskRepository(string conString)
         {
@@ -75,6 +80,9 @@ namespace BCh.KTC.TttDal {
             _parDefIdnUpdate = new FbParameter("@defIdn", FbDbType.Integer);
             _updateExecTimeCmd = new FbCommand(UpdateExecTimeCmdText);
             _updateExecTimeCmd.Parameters.AddRange(new[] { _parExecTimeUpdate, _parDefIdnUpdate });
+            _parTaskId = new FbParameter("@taskId", FbDbType.Integer);
+            _removeCmd = new FbCommand(RemoveCmdText);
+            _removeCmd.Parameters.Add(_parTaskId);
         }
 
 
@@ -101,6 +109,23 @@ namespace BCh.KTC.TttDal {
         }
       }
     }
+
+        public void RemoveTtTask(int taskId)
+        {
+            using (var con = new FbConnection(_conString))
+            {
+                con.Open();
+                using (var tx = con.BeginTransaction())
+                {
+                    _removeCmd.Connection = con;
+                    _removeCmd.Transaction = tx;
+
+                    _parTaskId.Value = taskId;
+                    _removeCmd.ExecuteNonQuery();
+                    tx.Commit();
+                }
+            }
+        }
 
         public void UpdateExecTimeTask(DateTime execTime, int defIdn)
         {
