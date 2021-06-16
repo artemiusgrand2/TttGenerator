@@ -6,6 +6,8 @@ namespace BCh.KTC.TttDal.Interfaces {
     bool IsTrainThreadBound(int trainId);
     string GetTrainNumberByTrainId(int trainId);
 
-    List<TrainHeaderRecord> RetrieveNotBoundHeaders();
+        int? GetPassedIdByPlannedId(int trainId);
+
+        List<TrainHeaderRecord> RetrieveNotBoundHeaders();
   }
 }

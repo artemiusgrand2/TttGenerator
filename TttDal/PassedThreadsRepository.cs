@@ -19,6 +19,9 @@ namespace BCh.KTC.TttDal
         private const string SelectByHeader = "SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid"
           + " WHERE TRAIN_IDN = @header";
 
+        private const string SelectLastRecordByHeader = "SELECT EV_TYPE, EV_STATION, EV_NDO, TRAIN_IDN, EV_TIME, EV_AXIS FROM tgraphicid"
+        + " WHERE TRAIN_IDN = @header ORDER BY EV_TIME DESC";
+
         private readonly FbCommand _selectCmd;
         private readonly FbParameter _parStation;
         private readonly FbParameter _parNdo;
@@ -31,6 +34,8 @@ namespace BCh.KTC.TttDal
         private readonly FbCommand _selectByHeader;
         private readonly FbParameter _parHeader;
 
+        private readonly FbCommand _selectLastRecordByHeader;
+        private readonly FbParameter _parHeaderLastRecord;
 
         private readonly string _conString;
 
@@ -52,6 +57,11 @@ namespace BCh.KTC.TttDal
             _selectByHeader = new FbCommand(SelectByHeader);
             _parHeader = new FbParameter("@header", FbDbType.Integer);
             _selectByHeader.Parameters.Add(_parHeader);
+            //
+            _selectLastRecordByHeader = new FbCommand(SelectLastRecordByHeader);
+            _parHeaderLastRecord = new FbParameter("@header", FbDbType.Integer);
+            _selectLastRecordByHeader.Parameters.Add(_parHeaderLastRecord);
+
         }
 
         public List<PassedTrainRecord> RetrieveByHeader(int header)
@@ -128,6 +138,38 @@ namespace BCh.KTC.TttDal
                     return retRecords;
                 }
             }
+        }
+
+        public PassedTrainRecord GetLastTrainRecord(int header)
+        {
+            PassedTrainRecord lastRecord = null;
+            using (var con = new FbConnection(_conString))
+            {
+                _selectLastRecordByHeader.Connection = con;
+                _parHeaderLastRecord.Value = header;
+                con.Open();
+                using (var dbReader = _selectLastRecordByHeader.ExecuteReader())
+                {
+                    // SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid
+                    if (dbReader.Read())
+                    {
+                        lastRecord = new PassedTrainRecord
+                        {
+                            EventType = dbReader.GetInt16Safely(0),
+                            Station = dbReader.GetStringSafely(1),
+                            Ndo = dbReader.GetStringSafely(2),
+
+                            TrainId = dbReader.GetInt32Safely(3),
+                            EventTime = dbReader.GetMinDateTimeIfNull(4),
+                            Axis = dbReader.GetStringSafely(5),
+                        };
+                        //
+                        if (lastRecord.Station.Length == 8)
+                            lastRecord.Station = lastRecord.Station.Substring(2, 6);
+                    }
+                }
+            }
+            return lastRecord;
         }
     }
 }

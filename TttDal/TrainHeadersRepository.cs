@@ -17,25 +17,39 @@ namespace BCh.KTC.TttDal {
       + " WHERE (TRAIN_NUM <> '' OR TRAIN_NUM is null) AND ((FL_SOST is null AND (NORM_IDN = 0 or NORM_IDN is null or NORM_IDN > 0)) OR (FL_SOST = 1 OR FL_SOST = 2))"
       + " ORDER BY FL_SOST";
 
+     private const string SelectPassedIdCmdText
+     = "SELECT TRAIN_IDN FROM TTRAINHEADERS"
+     + " WHERE NORM_IDN = @normId AND FL_SOST is null";
 
-    private readonly string _connectionString;
+
+        private readonly string _connectionString;
     private readonly FbCommand _boundCmd;
     private readonly FbCommand _selectTrainNumberCmd;
     private readonly FbCommand _selectNotBoundCmd;
     private readonly FbParameter _parTrainId;
     private readonly FbParameter _parTrainId2;
-    
 
-    public TrainHeadersRepository(string conString) {
-      _connectionString = conString;
-      _boundCmd = new FbCommand(BoundCmdText);
-      _parTrainId = new FbParameter("@trainId", FbDbType.Integer);
-      _boundCmd.Parameters.Add(_parTrainId);
-      _selectTrainNumberCmd = new FbCommand(SelectTrainNumberCmdText);
-      _parTrainId2 = new FbParameter("@trainId2", FbDbType.Integer);
-      _selectTrainNumberCmd.Parameters.Add(_parTrainId2);
-      _selectNotBoundCmd = new FbCommand(SelectNotBound);
-    }
+     private readonly FbCommand _selectPassedIdCmd;
+     private readonly FbParameter _parNormId;
+
+
+
+
+        public TrainHeadersRepository(string conString)
+        {
+            _connectionString = conString;
+            _boundCmd = new FbCommand(BoundCmdText);
+            _parTrainId = new FbParameter("@trainId", FbDbType.Integer);
+            _boundCmd.Parameters.Add(_parTrainId);
+            _selectTrainNumberCmd = new FbCommand(SelectTrainNumberCmdText);
+            _parTrainId2 = new FbParameter("@trainId2", FbDbType.Integer);
+            _selectTrainNumberCmd.Parameters.Add(_parTrainId2);
+            _selectNotBoundCmd = new FbCommand(SelectNotBound);
+            //
+            _selectPassedIdCmd = new FbCommand(SelectPassedIdCmdText);
+            _parNormId = new FbParameter("@normId", FbDbType.Integer);
+            _selectPassedIdCmd.Parameters.Add(_parNormId);
+        }
 
     public bool IsTrainThreadBound(int trainId) {
       using (var con = new FbConnection(_connectionString)) {
@@ -83,5 +97,24 @@ namespace BCh.KTC.TttDal {
       }
       return headers;
     }
-  }
+
+        public int? GetPassedIdByPlannedId(int trainId)
+        {
+            int? passedId = null;
+            using (var con = new FbConnection(_connectionString))
+            {
+                _selectPassedIdCmd.Connection = con;
+                _parNormId.Value = trainId;
+                con.Open();
+                using (var dbReader = _selectPassedIdCmd.ExecuteReader())
+                {
+                    if (dbReader.Read())
+                    {
+                        passedId = dbReader.GetInt32(0);
+                    }
+                }
+            }
+            return passedId;
+        }
+    }
 }

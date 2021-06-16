@@ -8,6 +8,8 @@ namespace BCh.KTC.TttDal.Interfaces {
       string station, string /* string ndo*/neighbourStationCode, bool isArrival,
       DateTime from, DateTime till);
 
-    List<PassedTrainRecord> RetrieveByHeader(int header);
-  }
+      List<PassedTrainRecord> RetrieveByHeader(int header);
+
+      PassedTrainRecord GetLastTrainRecord(int header);
+    }
 }

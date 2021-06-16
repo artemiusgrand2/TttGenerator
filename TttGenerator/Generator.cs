@@ -30,6 +30,7 @@ namespace BCh.KTC.TttGenerator {
 
       var controlledStations = GeneratorConfig.GetControlledStations();
       var plannedRepo = new PlannedThreadsRepository(_gidDbConString);
+            var passedRepo = new PassedThreadsRepository(_gidDbConString);
       var taskRepo = new TtTaskRepository(_gidDbConString);
       var trainHeadersRepo = new TrainHeadersRepository(_gidDbConString);
             var commandRepo = new CommandThreadsRepository(_gidDbConString);
@@ -38,7 +39,7 @@ namespace BCh.KTC.TttGenerator {
         GeneratorConfig.GetAdvanceCommandExecutionPeriod());
         _engine = new GeneratorEngine(timeConstraintCalculator,
         controlledStations,
-        plannedRepo, taskRepo, trainHeadersRepo, commandRepo,
+        plannedRepo, taskRepo, trainHeadersRepo, commandRepo, passedRepo,
         GeneratorConfig.GetPrevAckTime(), GeneratorConfig.GetPeriodConversionExecTime());
 
       int cycleTime = GeneratorConfig.GetCycleTime();

@@ -17,6 +17,7 @@ namespace BCh.KTC.TttGenerator
         private readonly TimeConstraintCalculator _timeConstraintCalculator;
         private readonly Dictionary<string, ControlledStation> _controlledStations;
         private readonly IPlannedThreadsRepository _plannedRepo;
+        private readonly IPassedThreadsRepository _passedRepo;
         private readonly ITtTaskRepository _taskRepo;
         private readonly ITrainHeadersRepository _trainHeadersRepo;
         private readonly ICommandThreadsRepository _commandRepo;
@@ -29,7 +30,7 @@ namespace BCh.KTC.TttGenerator
             IPlannedThreadsRepository plannedRepo,
             ITtTaskRepository taskRepo,
             ITrainHeadersRepository trainHeadersRepo,
-            ICommandThreadsRepository commandRepo,
+            ICommandThreadsRepository commandRepo, IPassedThreadsRepository passedRepo,
             int prevAckPeriod, int periodConversionExecTime)
         {
             _timeConstraintCalculator = timeConstraintCalculator;
@@ -38,6 +39,7 @@ namespace BCh.KTC.TttGenerator
             _taskRepo = taskRepo;
             _trainHeadersRepo = trainHeadersRepo;
             _commandRepo = commandRepo;
+            _passedRepo = passedRepo;
             _prevAckPeriod = new TimeSpan(0, prevAckPeriod, 0);
             _periodConversionExecTime = new TimeSpan(0, periodConversionExecTime, 0);
         }
@@ -161,7 +163,20 @@ namespace BCh.KTC.TttGenerator
                 }
             }
             // 1.2 self dependency constraints - has prev event been executed?
-            bool has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index, deltaPlanExecuted);
+            bool has12PrevBeenEventExecuted = false;
+            if (!has11PrevTaskBeenExecuted)
+            {
+                bool isSetNullAckEventFlag;
+                has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index, deltaPlanExecuted, out isSetNullAckEventFlag);
+                if (isSetNullAckEventFlag)
+                {
+                    //if (--index >= 0)
+                    //{
+                    //    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
+                    //}
+                    return;
+                }
+            }
 
             // 2 time constraints
             bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime, deltaPlanExecuted);
@@ -193,9 +208,10 @@ namespace BCh.KTC.TttGenerator
                 if (arrivalToCrossing)
                     task.SentFlag = 4;
                 //autonom station
-                if (IsAutonomousForStationEvent(thread, index))
+                var isAutonomous = IsAutonomousForStationEvent(thread, index);
+                if (isAutonomous)
                     task.SentFlag = 4;
-                _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}");
+                _logger.Info($"Task created: {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}" + $"{((isAutonomous) ? " command for autonom station - without doing." : string.Empty)}");
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");
             }
@@ -368,8 +384,9 @@ namespace BCh.KTC.TttGenerator
         }
 
 
-        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted)
+        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted, out bool isSetNullAckEventFlag)
         {
+            isSetNullAckEventFlag = false;
             int i = index;
             while (--i >= 0)
             {
@@ -377,7 +394,27 @@ namespace BCh.KTC.TttGenerator
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
-                        if(thread[i].AckEventFlag != -1)
+                        if (thread[i].AckEventFlag != -1)
+                        {
+                            var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
+                            if(passedId != null)
+                            {
+                                var lastRecordPassed= _passedRepo.GetLastTrainRecord((int)passedId);
+                                if(lastRecordPassed != null)
+                                {
+                                    if (lastRecordPassed.Station == thread[i].Station && (lastRecordPassed.EventType == thread[i].EventType || (lastRecordPassed.EventType != 3 && thread[i].EventType != 3)))
+                                    {
+                                        if (lastRecordPassed.Ndo != thread[i].Ndo)
+                                        {
+                                            _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed event - {lastRecordPassed.ToString()}, in planned event -  {thread[i].ToString()} !!!!");
+                                            isSetNullAckEventFlag = true;
+                                            _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        //
                         return true;
                     }
                 }
