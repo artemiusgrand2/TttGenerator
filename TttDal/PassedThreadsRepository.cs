@@ -1,5 +1,6 @@
 ﻿using BCh.KTC.TttDal.Interfaces;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using BCh.KTC.TttEntities;
 using FirebirdSql.Data.FirebirdClient;
@@ -140,9 +141,9 @@ namespace BCh.KTC.TttDal
             }
         }
 
-        public PassedTrainRecord GetLastTrainRecord(int header)
+        public List<PassedTrainRecord> GetLastTrainRecordsForStation(int header)
         {
-            PassedTrainRecord lastRecord = null;
+            var lastRecords = new List<PassedTrainRecord>();
             using (var con = new FbConnection(_conString))
             {
                 _selectLastRecordByHeader.Connection = con;
@@ -151,9 +152,9 @@ namespace BCh.KTC.TttDal
                 using (var dbReader = _selectLastRecordByHeader.ExecuteReader())
                 {
                     // SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid
-                    if (dbReader.Read())
+                    while (dbReader.Read())
                     {
-                        lastRecord = new PassedTrainRecord
+                        var record= new PassedTrainRecord
                         {
                             EventType = dbReader.GetInt16Safely(0),
                             Station = dbReader.GetStringSafely(1),
@@ -164,12 +165,17 @@ namespace BCh.KTC.TttDal
                             Axis = dbReader.GetStringSafely(5),
                         };
                         //
-                        if (lastRecord.Station.Length == 8)
-                            lastRecord.Station = lastRecord.Station.Substring(2, 6);
+                        if (record.Station.Length == 8)
+                            record.Station = record.Station.Substring(2, 6);
+                        //
+                        if (lastRecords.Count == 0 || lastRecords.Where(x => x.Station == record.Station).FirstOrDefault() != null)
+                            lastRecords.Add(record);
+                        else
+                            break;
                     }
                 }
             }
-            return lastRecord;
+            return lastRecords;
         }
     }
 }

@@ -10,6 +10,6 @@ namespace BCh.KTC.TttDal.Interfaces {
 
       List<PassedTrainRecord> RetrieveByHeader(int header);
 
-      PassedTrainRecord GetLastTrainRecord(int header);
+        List<PassedTrainRecord> GetLastTrainRecordsForStation(int header);
     }
 }

@@ -284,8 +284,12 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
                 if (prevPlannedTrainRecord != null &&
-                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis))
-                    task.SentFlag = 6;
+                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis /*&& !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis)*/)
+                {
+                    task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
+                    _logger.Info($"Task -  {plannedTrainRecord.ToString()} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
+                    //task.SentFlag = 6;
+                }
             }
             //
             task.CreationTime = DateTime.Now;
@@ -394,22 +398,30 @@ namespace BCh.KTC.TttGenerator
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
-                        if (thread[i].AckEventFlag != -1)
+                        if (thread[i].AckEventFlag != -1 && thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station)
                         {
                             var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
                             if(passedId != null)
                             {
-                                var lastRecordPassed= _passedRepo.GetLastTrainRecord((int)passedId);
-                                if(lastRecordPassed != null)
+                                var lastRecordsPassed= _passedRepo.GetLastTrainRecordsForStation((int)passedId);
+                                if(lastRecordsPassed != null && lastRecordsPassed.Count > 0 && lastRecordsPassed[0].Station == thread[i].Station)
                                 {
-                                    if (lastRecordPassed.Station == thread[i].Station && (lastRecordPassed.EventType == thread[i].EventType || (lastRecordPassed.EventType != 3 && thread[i].EventType != 3)))
+                                    var isFindEvent = false;
+                                    foreach(var recordPassed in lastRecordsPassed)
                                     {
-                                        if (lastRecordPassed.Ndo != thread[i].Ndo)
+                                        if (((recordPassed.EventType == thread[i].EventType || (recordPassed.EventType != 3 && thread[i].EventType != 3)) && recordPassed.Ndo == thread[i].Ndo))
                                         {
-                                            _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed event - {lastRecordPassed.ToString()}, in planned event -  {thread[i].ToString()} !!!!");
-                                            isSetNullAckEventFlag = true;
-                                            _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
+                                            isFindEvent = true;
+                                            break;
                                         }
+                                    }
+                                    //
+                                    if(!isFindEvent)
+                                    {
+                                        lastRecordsPassed.ForEach(recordPassed => { _logger.Info($"Last event passed {recordPassed.ToString()}."); });
+                                        _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed grafic not the confirmation planned event -  {thread[i].ToString()} !!!!");
+                                        isSetNullAckEventFlag = true;
+                                        _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
                                     }
                                 }
                             }

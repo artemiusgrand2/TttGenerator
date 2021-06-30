@@ -58,7 +58,7 @@ namespace BCh.KTC.TttDal
         private readonly FbCommand _selectByHeader;
         private readonly FbParameter _parHeader;
 
-        private  FbCommand _setAckEventFlag;
+        private readonly  FbCommand _setAckEventFlag;
         private readonly  FbParameter _parEvRecId;
         private readonly  FbParameter _parAckEvFlag;
 
@@ -74,8 +74,11 @@ namespace BCh.KTC.TttDal
             _parHeader = new FbParameter("@header", FbDbType.Integer);
             _selectByHeader.Parameters.Add(_parHeader);
             //
+            _setAckEventFlag = new FbCommand(SetAckEventFlagCmdTxt);
             _parEvRecId = new FbParameter("@evRecId", FbDbType.Integer);
             _parAckEvFlag = new FbParameter("@flag", FbDbType.SmallInt);
+            _setAckEventFlag.Parameters.Add(_parEvRecId);
+            _setAckEventFlag.Parameters.Add(_parAckEvFlag);
         }
 
         public List<PlannedTrainRecord> RetrieveByHeader(int header)
@@ -198,32 +201,30 @@ namespace BCh.KTC.TttDal
             return records;
         }
 
+
+
+
         public bool SetAckEventFlag(int plEvId, short? flag)
         {
             var result = false;
-            using (var connection = new FbConnection(_conString))
+            using (var con = new FbConnection(_conString))
             {
-                connection.Open();
-                using (_setAckEventFlag = new FbCommand(SetAckEventFlagCmdTxt))
+                con.Open();
+                using (var tx = con.BeginTransaction())
                 {
-                    _setAckEventFlag.Parameters.Add(_parEvRecId);
-                    _setAckEventFlag.Parameters.Add(_parAckEvFlag);
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        _setAckEventFlag.Connection = connection;
-                        _setAckEventFlag.Transaction = transaction;
-                        _parEvRecId.Value = plEvId;
-                        _parAckEvFlag.Value = flag;
-                        if (_setAckEventFlag.ExecuteNonQuery() > 0)
-                            result = true;
-                        transaction.Commit();
-                    }
+                    _setAckEventFlag.Connection = con;
+                    _setAckEventFlag.Transaction = tx;
+
+                    _parEvRecId.Value = plEvId;
+                    _parAckEvFlag.Value = flag;
+                    if (_setAckEventFlag.ExecuteNonQuery() > 0)
+                        result = true;
+                    tx.Commit();
                 }
-                //
-                connection.Close();
             }
             return result;
         }
 
     }
 }
+
