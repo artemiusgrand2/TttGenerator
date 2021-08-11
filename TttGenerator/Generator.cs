@@ -36,7 +36,7 @@ namespace BCh.KTC.TttGenerator {
             var commandRepo = new CommandThreadsRepository(_gidDbConString);
             var timeConstraintCalculator = new TimeConstraintCalculator(controlledStations,
         GeneratorConfig.GetReserveTime(),
-        GeneratorConfig.GetAdvanceCommandExecutionPeriod());
+        GeneratorConfig.GetAdvanceCommandExecutionPeriod(), trainHeadersRepo);
         _engine = new GeneratorEngine(timeConstraintCalculator,
         controlledStations,
         plannedRepo, taskRepo, trainHeadersRepo, commandRepo, passedRepo,

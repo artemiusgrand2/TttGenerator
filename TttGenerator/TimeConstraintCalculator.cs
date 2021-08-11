@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BCh.KTC.TttEntities;
 using BCh.KTC.TttGenerator.Config;
+using BCh.KTC.TttDal.Interfaces;
 using log4net;
 
 namespace BCh.KTC.TttGenerator {
@@ -9,16 +10,19 @@ namespace BCh.KTC.TttGenerator {
     private static readonly ILog _logger = LogManager.GetLogger(typeof(TimeConstraintCalculator));
 
     private readonly Dictionary<string, ControlledStation> _controlledStations;
-    private readonly int _reserveTime; // 1 - 2 minutes
+        private readonly ITrainHeadersRepository _trainHeadersRepo;
+        private readonly int _reserveTime; // 1 - 2 minutes
     private readonly int _advanceCmdExePeriod;
 
-    public TimeConstraintCalculator(Dictionary<string, ControlledStation> controlledStations,
-        int reserveTime,
-        int advanceCmdExePeriod) {
-      _controlledStations = controlledStations;
-      _reserveTime = reserveTime;
-      _advanceCmdExePeriod = advanceCmdExePeriod;
-    }
+        public TimeConstraintCalculator(Dictionary<string, ControlledStation> controlledStations,
+            int reserveTime,
+            int advanceCmdExePeriod, ITrainHeadersRepository trainHeadersRepo)
+        {
+            _controlledStations = controlledStations;
+            _reserveTime = reserveTime;
+            _advanceCmdExePeriod = advanceCmdExePeriod;
+            _trainHeadersRepo = trainHeadersRepo;
+        }
 
         public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
             int index, DateTime currentTime, out DateTime executionTime, TimeSpan deltaPlanExecuted)
@@ -64,7 +68,7 @@ namespace BCh.KTC.TttGenerator {
             var result = executionTime.AddMinutes(-_advanceCmdExePeriod) < currentTime;
             if (!result)
             {
-                _logger.Info($"Task -  {threads[index].ToString()} not write, because early .({threads[index].ForecastTime.ToLongTimeString()}) - {deltaPlanExecuted.Hours}:{deltaPlanExecuted.Minutes}:{deltaPlanExecuted.Seconds} . {forecastTime.ToLongTimeString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToLongTimeString()} >= {currentTime.ToLongTimeString()}");
+                _logger.Info($"Task -  {threads[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(threads[index].TrainId))} not write, because early .({threads[index].ForecastTime.ToLongTimeString()}) - {deltaPlanExecuted.Hours}:{deltaPlanExecuted.Minutes}:{deltaPlanExecuted.Seconds} . {forecastTime.ToLongTimeString()} - {delta} - {_advanceCmdExePeriod} = {executionTime.AddMinutes(-_advanceCmdExePeriod).ToLongTimeString()} >= {currentTime.ToLongTimeString()}");
             }
             //else
             //{
@@ -101,11 +105,11 @@ namespace BCh.KTC.TttGenerator {
             }
             break;
           default:
-            _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode} {trainRecord.ToString()}");
+            _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
             break;
         }
       }
-      _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString()}");
+      _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
       return 0;
     }
 

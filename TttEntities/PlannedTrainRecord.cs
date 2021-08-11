@@ -24,11 +24,17 @@ namespace BCh.KTC.TttEntities
             return string.Format($"{TrainId} st:{Station} a:{Axis} ndo:{Ndo} {((EventType == 3)?"dep":"arr")} pt:{PlannedTime.ToShortTimeString()}");
         }
 
+        public string ToString(string trainNumber)
+        {
+            TrainNumber = trainNumber;
+            return string.Format($"tr:'{trainNumber}' {ToString()}");
+        }
+
         public DateTime GetForecastTime2(TimeSpan deltaPlanExecuted)
         {
             var forecastTime = PlannedTime.Add(deltaPlanExecuted);
-            if (ForecastTime < forecastTime)
-                forecastTime = ForecastTime;
+            //if (ForecastTime < forecastTime)
+            //    forecastTime = ForecastTime;
             //
             return forecastTime;
         }
