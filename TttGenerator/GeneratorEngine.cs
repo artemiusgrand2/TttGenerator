@@ -199,7 +199,7 @@ namespace BCh.KTC.TttGenerator
                 && are4ThereAnyAckEvents
                 || (has2TimeConstraintsPassed
                     && has3OtherTrainDependenciesPassed
-                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId)))
+                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId) && CheckPlannedTimeWithCurTime(thread[index])))
             {
                 TtTaskRecord task = CreateTask(thread[index], (index > 0) ? thread[index - 1] : null, dependencyEventReference, executionTime);
                 //
@@ -215,6 +215,14 @@ namespace BCh.KTC.TttGenerator
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");
             }
+        }
+
+        private bool CheckPlannedTimeWithCurTime(PlannedTrainRecord plannedRecord)
+        {
+            var result = plannedRecord.PlannedTime > DateTime.Now;
+            if(!result)
+                _logger.Info($"Task -  {plannedRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedRecord.TrainId))} not write, because rope not tied and planned time < currentTime");
+            return result;
         }
 
         private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
