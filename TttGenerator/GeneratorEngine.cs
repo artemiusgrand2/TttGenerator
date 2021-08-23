@@ -413,34 +413,34 @@ namespace BCh.KTC.TttGenerator
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
-                        //if (thread[i].AckEventFlag != -1 && thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station)
-                        //{
-                        //    var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
-                        //    if(passedId != null)
-                        //    {
-                        //        var lastRecordsPassed= _passedRepo.GetLastTrainRecordsForStation((int)passedId);
-                        //        if(lastRecordsPassed != null && lastRecordsPassed.Count > 0 && lastRecordsPassed[0].Station == thread[i].Station)
-                        //        {
-                        //            var isFindEvent = false;
-                        //            foreach(var recordPassed in lastRecordsPassed)
-                        //            {
-                        //                if (((recordPassed.EventType == thread[i].EventType || (recordPassed.EventType != 3 && thread[i].EventType != 3)) && recordPassed.Ndo == thread[i].Ndo))
-                        //                {
-                        //                    isFindEvent = true;
-                        //                    break;
-                        //                }
-                        //            }
-                        //            //
-                        //            if(!isFindEvent)
-                        //            {
-                        //                lastRecordsPassed.ForEach(recordPassed => { _logger.Info($"Last event passed {recordPassed.ToString()}."); });
-                        //                _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed grafic not the confirmation planned event -  {thread[i].ToString()} !!!!");
-                        //                isSetNullAckEventFlag = true;
-                        //                _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
-                        //            }
-                        //        }
-                        //    }
-                        //}
+                        if (thread[i].AckEventFlag != -1 && thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station)
+                        {
+                            var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
+                            if (passedId != null)
+                            {
+                                var lastRecordsPassed = _passedRepo.GetLastTrainRecordsForStation((int)passedId);
+                                if (lastRecordsPassed != null && lastRecordsPassed.Count > 0 && lastRecordsPassed[0].Station == thread[i].Station)
+                                {
+                                    var isFindEvent = false;
+                                    foreach (var recordPassed in lastRecordsPassed)
+                                    {
+                                        if (((recordPassed.EventType == thread[i].EventType || (recordPassed.EventType != 3 && thread[i].EventType != 3)) && recordPassed.Ndo == thread[i].Ndo))
+                                        {
+                                            isFindEvent = true;
+                                            break;
+                                        }
+                                    }
+                                    //
+                                    if (!isFindEvent)
+                                    {
+                                        lastRecordsPassed.ForEach(recordPassed => { _logger.Info($"Last event passed {recordPassed.ToString()}."); });
+                                        _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed grafic not the confirmation planned event -  {thread[i].ToString()} !!!!");
+                                        isSetNullAckEventFlag = true;
+                                        _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
+                                    }
+                                }
+                            }
+                        }
                         //
                         return true;
                     }
