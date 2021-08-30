@@ -299,11 +299,11 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
                 if (prevPlannedTrainRecord != null &&
-                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station && plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis /*&& !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis)*/)
+                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station /*&& plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis*/ && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis))
                 {
-                    task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
-                    _logger.Info($"Task -  {plannedTrainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId))} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
-                    //task.SentFlag = 6;
+                    //task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
+                    //_logger.Info($"Task -  {plannedTrainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId))} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
+                    task.SentFlag = 6;
                 }
             }
             //
