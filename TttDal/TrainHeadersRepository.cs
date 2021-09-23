@@ -21,17 +21,25 @@ namespace BCh.KTC.TttDal {
      = "SELECT TRAIN_IDN FROM TTRAINHEADERS"
      + " WHERE NORM_IDN = @normId AND FL_SOST is null";
 
+     private const string SetStateFlagCmdText = "UPDATE TTrainHeaders"
+      + " SET Fl_Sost = @FlSost"
+      + " WHERE Train_Idn = @trainId3";
+
 
         private readonly string _connectionString;
-    private readonly FbCommand _boundCmd;
-    private readonly FbCommand _selectTrainNumberCmd;
-    private readonly FbCommand _selectNotBoundCmd;
-    private readonly FbParameter _parTrainId;
-    private readonly FbParameter _parTrainId2;
+        private readonly FbCommand _boundCmd;
+        private readonly FbCommand _selectTrainNumberCmd;
+        private readonly FbCommand _selectNotBoundCmd;
+        private readonly FbCommand _selectPassedIdCmd;
+        private readonly FbCommand _setStatFlagCmd;
 
-     private readonly FbCommand _selectPassedIdCmd;
-     private readonly FbParameter _parNormId;
 
+        private readonly FbParameter _parTrainId;
+        private readonly FbParameter _parTrainId2;
+        private readonly FbParameter _parTrainId3;
+        private readonly FbParameter _parNormId;
+        private readonly FbParameter _parStatFlag;
+       
 
 
 
@@ -49,6 +57,12 @@ namespace BCh.KTC.TttDal {
             _selectPassedIdCmd = new FbCommand(SelectPassedIdCmdText);
             _parNormId = new FbParameter("@normId", FbDbType.Integer);
             _selectPassedIdCmd.Parameters.Add(_parNormId);
+            //
+            _setStatFlagCmd = new FbCommand(SetStateFlagCmdText);
+            _parTrainId3 = new FbParameter("@trainId3", FbDbType.Integer);
+            _parStatFlag = new FbParameter("@FlSost", FbDbType.Integer);
+            _setStatFlagCmd.Parameters.Add(_parTrainId3);
+            _setStatFlagCmd.Parameters.Add(_parStatFlag);
         }
 
     public bool IsTrainThreadBound(int trainId) {
@@ -115,6 +129,27 @@ namespace BCh.KTC.TttDal {
                 }
             }
             return passedId;
+        }
+
+        public bool SetStateFlag(int trainId, int statFlag)
+        {
+            var result = false;
+            using (var con = new FbConnection(_connectionString))
+            {
+                con.Open();
+                using (var tx = con.BeginTransaction())
+                {
+                    _setStatFlagCmd.Connection = con;
+                    _setStatFlagCmd.Transaction = tx;
+
+                    _parTrainId3.Value = trainId;
+                    _parStatFlag.Value = statFlag;
+                    if (_setStatFlagCmd.ExecuteNonQuery() > 0)
+                        result = true;
+                    tx.Commit();
+                }
+            }
+            return result;
         }
     }
 }

@@ -5,6 +5,7 @@ namespace BCh.KTC.TrainNumberBinder
     {
         none = 0,
         deletePlan,
-        flag1
+        flag1,
+        thread_break
     }
 }

@@ -55,6 +55,7 @@ namespace BCh.KTC.TttGenerator
             var plannedRecords = _plannedRepo.RetrieveThreadsForTttGenerator(currentTime);
             var plannedThreads = PlannedThreadsProcessor.GetPlannedThreads(plannedRecords);
             var issuedTasks = _taskRepo.GetTtTasks();
+            plannedThreads.ForEach(x => { ClearFalseMove(x); });
             foreach (var thread in plannedThreads)
             {
                 int i = GetIndexOfLastNotConfirmedRecord(thread);
@@ -83,6 +84,50 @@ namespace BCh.KTC.TttGenerator
                 }
             }
             return i;
+        }
+
+        private void ClearFalseMove(PlannedTrainRecord[] thread)
+        {
+            int i = thread.Length - 1;
+            while (i >= 0)
+            {
+                if (_controlledStations.ContainsKey(thread[i].Station))
+                {
+                    if (thread[i].AckEventFlag != -1)
+                    {
+                        if (thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station)
+                        {
+                            var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
+                            if (passedId != null)
+                            {
+                                var lastRecordsPassed = _passedRepo.GetLastTrainRecordsForStation((int)passedId);
+                                if (lastRecordsPassed != null && lastRecordsPassed.Count > 0 && lastRecordsPassed[0].Station == thread[i].Station)
+                                {
+                                    var isFindEvent = false;
+                                    foreach (var recordPassed in lastRecordsPassed)
+                                    {
+                                        if (((recordPassed.EventType == thread[i].EventType || (recordPassed.EventType != 3 && thread[i].EventType != 3)) && recordPassed.Ndo == thread[i].Ndo))
+                                        {
+                                            isFindEvent = true;
+                                            break;
+                                        }
+                                    }
+                                    //
+                                    if (!isFindEvent)
+                                    {
+                                        _logger.Info($"Wrong move. {thread[i].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[i].TrainId))} !!!!");
+                                        lastRecordsPassed.ForEach(recordPassed => { _logger.Info($"Last event passed {recordPassed.ToString()}."); });
+                                        _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
+                                        thread[i].AckEventFlag = -1;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                i--;
+            }
         }
 
 
@@ -166,30 +211,35 @@ namespace BCh.KTC.TttGenerator
             bool has12PrevBeenEventExecuted = false;
             if (!has11PrevTaskBeenExecuted)
             {
-                bool isSetNullAckEventFlag;
-                has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index, deltaPlanExecuted, out isSetNullAckEventFlag);
-                if (isSetNullAckEventFlag)
-                {
-                    //if (--index >= 0)
-                    //{
-                    //    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
-                    //}
-                    return;
-                }
+              //  bool isSetNullAckEventFlag;
+                has12PrevBeenEventExecuted = HaveSelfDependenciesBeenPassed(thread, index, deltaPlanExecuted/*, out isSetNullAckEventFlag*/);
+                //if (isSetNullAckEventFlag)
+                //{
+                //    //if (--index >= 0)
+                //    //{
+                //    //    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
+                //    //}
+                //    return;
+                //}
             }
-
             // 2 time constraints
             bool has2TimeConstraintsPassed = _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime, deltaPlanExecuted);
 
-            if (lastAckEventOrBeginning + _prevAckPeriod < executionTime)
+            if (lastAckEventOrBeginning + _prevAckPeriod < executionTime || !has2TimeConstraintsPassed)
             {
+                if (has2TimeConstraintsPassed)
+                {
+                    _logger.Info($"Task - {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} not write, does not fall into the capture area. {lastAckEventOrBeginning} + {_prevAckPeriod.Hours}:{_prevAckPeriod.Minutes} < {executionTime.ToLongTimeString()}");
+                }
+                //
                 return;
             }
             // 3 other train dependencies constraints
             int dependencyEventReference;
             bool arrivalToCrossing;
             bool has3OtherTrainDependenciesPassed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference, out arrivalToCrossing);
-
+            if (!has3OtherTrainDependenciesPassed)
+                return;
             // 6 is task generation allowed for this station / event (arr, dep)
             bool is6TaskGenAllowedForStationEvent = IsTaskGenAllowedForStationEvent(thread, index);
 
@@ -403,9 +453,8 @@ namespace BCh.KTC.TttGenerator
         }
 
 
-        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted, out bool isSetNullAckEventFlag)
+        private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted)
         {
-            isSetNullAckEventFlag = false;
             int i = index;
             while (--i >= 0)
             {
@@ -413,35 +462,6 @@ namespace BCh.KTC.TttGenerator
                 {
                     if (thread[i].AckEventFlag != -1 || i == 0)
                     {
-                        if (thread[i].AckEventFlag != -1 && thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station)
-                        {
-                            var passedId = _trainHeadersRepo.GetPassedIdByPlannedId(thread[i].TrainId);
-                            if (passedId != null)
-                            {
-                                var lastRecordsPassed = _passedRepo.GetLastTrainRecordsForStation((int)passedId);
-                                if (lastRecordsPassed != null && lastRecordsPassed.Count > 0 && lastRecordsPassed[0].Station == thread[i].Station)
-                                {
-                                    var isFindEvent = false;
-                                    foreach (var recordPassed in lastRecordsPassed)
-                                    {
-                                        if (((recordPassed.EventType == thread[i].EventType || (recordPassed.EventType != 3 && thread[i].EventType != 3)) && recordPassed.Ndo == thread[i].Ndo))
-                                        {
-                                            isFindEvent = true;
-                                            break;
-                                        }
-                                    }
-                                    //
-                                    if (!isFindEvent)
-                                    {
-                                        lastRecordsPassed.ForEach(recordPassed => { _logger.Info($"Last event passed {recordPassed.ToString()}."); });
-                                        _logger.Info($"Task -  {thread[index].ToString()} false move event. In passed grafic not the confirmation planned event -  {thread[i].ToString()} !!!!");
-                                        isSetNullAckEventFlag = true;
-                                        _plannedRepo.SetAckEventFlag(thread[i].RecId, null);
-                                    }
-                                }
-                            }
-                        }
-                        //
                         return true;
                     }
                 }

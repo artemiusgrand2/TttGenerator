@@ -9,5 +9,7 @@ namespace BCh.KTC.TttDal.Interfaces {
         int? GetPassedIdByPlannedId(int trainId);
 
         List<TrainHeaderRecord> RetrieveNotBoundHeaders();
-  }
+
+        bool SetStateFlag(int trainId, int statFlag);
+    }
 }
