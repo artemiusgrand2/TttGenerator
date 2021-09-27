@@ -52,6 +52,7 @@
     <Compile Include="Generator.cs" />
     <Compile Include="GeneratorEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReasonDeleteCommand.cs" />
     <Compile Include="Services\PlannedThreadsProcessor.cs" />
     <Compile Include="TimeConstraintCalculator.cs" />
   </ItemGroup>

@@ -61,8 +61,9 @@ namespace BCh.KTC.TttGenerator
                 int i = GetIndexOfLastNotConfirmedRecord(thread);
                 if (i != thread.Length)
                 {
-                   // var delElexistingTask = false;
-                    ProcessThread(plannedThreads, thread, i, issuedTasks, currentTime/*, ref delElexistingTask*/);
+                    var delElexistingTask = ReasonDeleteCommand.none;
+
+                    ProcessThread(plannedThreads, thread, i, issuedTasks, currentTime, ref delElexistingTask);
                 }
             }
         }
@@ -131,14 +132,14 @@ namespace BCh.KTC.TttGenerator
         }
 
 
-        private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime/*,ref bool delElexistingTask*/)
+        private void ProcessThread(List<PlannedTrainRecord[]> allThreads, PlannedTrainRecord[] thread, int index, List<TtTaskRecord> tasks, DateTime currentTime, ref ReasonDeleteCommand delElexistingTask)
         {
             // -2 checking whether the station is controlled
             if (!_controlledStations.ContainsKey(thread[index].Station))
             {
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime, ref delElexistingTask);
                 }
                 return;
             }
@@ -147,7 +148,7 @@ namespace BCh.KTC.TttGenerator
             {
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime, ref delElexistingTask);
                 }
                 return;
             }
@@ -156,21 +157,37 @@ namespace BCh.KTC.TttGenerator
             DateTime executionTime;
             if (existingTask != null)
             {
-                //int dependencyEventReferenceBuff = -1;
-                //bool arrivalToCrossingBuff;
-                //if (delElexistingTask || !HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReferenceBuff, out arrivalToCrossingBuff))
-                //{
-                //    _taskRepo.RemoveTtTask(existingTask.RecId);
-                //    _logger.Info($"Task removed: : {existingTask.PlannedEventReference} - {existingTask.Station}, {existingTask.RouteStartObjectType}:{existingTask.RouteStartObjectName}, " +
-                //        $"{existingTask.RouteEndObjectType}:{existingTask.RouteEndObjectName}, " +
-                //        $" because not done event with id - {dependencyEventReferenceBuff}.");
-                //    delElexistingTask = true;
-                //}
-                //else
-                //{
-                    if (existingTask.SentFlag != 4)
+                int dependencyEventReferenceBuff = -1;
+                bool arrivalToCrossingBuff;
+                if (delElexistingTask != ReasonDeleteCommand.none || !HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReferenceBuff, out arrivalToCrossingBuff))
+                {
+                    _taskRepo.RemoveTtTask(existingTask.RecId);
+                    if (delElexistingTask == ReasonDeleteCommand.none)
+                        delElexistingTask = ReasonDeleteCommand.changePlan;
+                    switch (delElexistingTask)
                     {
-                    _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId)));// /*+ $"{((existingTask.SentFlag == 7) ? " command for autonom station - without doing." : string.Empty)}")*/;
+                       
+                        case ReasonDeleteCommand.changePlan:
+                            {
+                                _logger.Info($"Task removed: {existingTask.ToString()}, because the order of passage has changed.");
+                            }
+                            break;
+                        case ReasonDeleteCommand.breakCommand:
+                            {
+                                _logger.Info($"Task removed: {existingTask.ToString()}, because command break according to information from ARM.");
+                            }
+                            break;
+                    }    
+                }
+                else
+                {
+                    if (existingTask.SentFlag == 3)
+                    {
+                        delElexistingTask = ReasonDeleteCommand.breakCommand;
+                    }
+                    else if (existingTask.SentFlag != 4)
+                    {
+                        _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId)));// /*+ $"{((existingTask.SentFlag == 7) ? " command for autonom station - without doing." : string.Empty)}")*/;
                         //conversion execTime
                         //if(existingTask.SentFlag != 5 && existingTask.SentFlag != 6)
                         //{
@@ -184,14 +201,17 @@ namespace BCh.KTC.TttGenerator
                         //
                         return;
                     }
-             //   }
+                }
                 //
                 if (++index < thread.Length)
                 {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime/*, ref delElexistingTask*/);
+                    ProcessThread(allThreads, thread, index, tasks, currentTime, ref delElexistingTask);
                 }
                 return;
             }
+            //
+            if (delElexistingTask != ReasonDeleteCommand.none)
+                return;
             // 0 (4)- is the thread identified (bound; are there any ack events)
             DateTime lastAckEventOrBeginning;
             TimeSpan deltaPlanExecuted;
