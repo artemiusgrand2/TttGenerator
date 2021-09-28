@@ -23,6 +23,7 @@ namespace BCh.KTC.TttGenerator
         private readonly ICommandThreadsRepository _commandRepo;
         private readonly TimeSpan _prevAckPeriod; // 15 - 20 minutes
         private readonly TimeSpan _periodConversionExecTime; //in minutes
+        private readonly string _patternAxis = @"^([0-9]+)(.*)$";
 
 
         public GeneratorEngine(TimeConstraintCalculator timeConstraintCalculator,
@@ -387,11 +388,11 @@ namespace BCh.KTC.TttGenerator
 
         private bool EqualsAxis(string axis1, string axis2)
         {
-            var patternAxis = @"^([0-9]+)(.*)$";
-            var match1 = Regex.Match(axis1, patternAxis);
+        
+            var match1 = Regex.Match(axis1, _patternAxis);
             if (match1.Success)
             {
-                var match2 = Regex.Match(axis2, patternAxis);
+                var match2 = Regex.Match(axis2, _patternAxis);
                 if (match2.Success)
                 {
                     if (match1.Groups.Count > 1 && match2.Groups.Count > 1)
@@ -400,6 +401,26 @@ namespace BCh.KTC.TttGenerator
             }
             //
             return (axis1 == axis2);
+        }
+
+        private ViewParity GetViewParityObject(string name, bool isPath)
+        {
+            if (isPath)
+            {
+                var match1 = Regex.Match(name, _patternAxis);
+                if (match1.Success)
+                    return (int.Parse(match1.Groups[1].Value) % 2 == 0) ? ViewParity.even : ViewParity.odd;
+            }
+            else
+            {
+                if (name.ToUpper().IndexOf("Ч") != -1)
+                    return ViewParity.even;
+                //
+                if (name.ToUpper().IndexOf("Н") != -1)
+                    return ViewParity.odd;
+            }
+            //
+            return ViewParity.none;
         }
 
         private bool HaveOtherTrainDependenciesBeenPasssed(List<PlannedTrainRecord[]> allThreads,
@@ -426,7 +447,9 @@ namespace BCh.KTC.TttGenerator
                     if (thread[index].EventType != 3)
                     { // Arrival
                         if (aThread[i].Station == thread[index].Station
-                            && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo)/* ||
+                            && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo) 
+                            || IsСrossingTwoPaths(thread[index], aThread[i])
+                            /* ||
                             (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))*/
                              /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/))
                         {
@@ -436,7 +459,9 @@ namespace BCh.KTC.TttGenerator
                     else
                     { // Depature
                         if (aThread[i].Station == thread[index].Station
-                            && (aThread[i].Ndo == thread[index].Ndo ||(isCrossing && i > 0 && aThread[i - 1].EventType == 2 && aThread[i - 1].Station == thread[index].Station && aThread[i - 1].Ndo == thread[index].Ndo)))
+                            && (aThread[i].Ndo == thread[index].Ndo || 
+                            IsСrossingTwoPaths(thread[index], aThread[i]) ||
+                            (isCrossing && i > 0 && aThread[i - 1].EventType == 2 && aThread[i - 1].Station == thread[index].Station && aThread[i - 1].Ndo == thread[index].Ndo)))
                         {
                             eventFound = true;
                         }
@@ -468,10 +493,23 @@ namespace BCh.KTC.TttGenerator
             else if (previousEvent.AckEventFlag == -1)
             {
                 _logger.Info($"Task -  {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} not write, because not done event - {previousEvent.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(previousEvent.TrainId))}");
+
+
             }
             return false;
         }
 
+
+        private bool IsСrossingTwoPaths(PlannedTrainRecord сurEvent, PlannedTrainRecord checkEvent)
+        {
+            if(сurEvent.Ndo != checkEvent.Ndo && сurEvent.NeighbourStationCode == checkEvent.NeighbourStationCode)
+            {
+                if (GetViewParityObject(сurEvent.Axis, true) != GetViewParityObject(сurEvent.Ndo, false) || GetViewParityObject(checkEvent.Axis, true) != GetViewParityObject(checkEvent.Ndo, false))
+                    return true;
+            }
+            //
+            return false;
+        }
 
         private bool HaveSelfDependenciesBeenPassed(PlannedTrainRecord[] thread, int index, TimeSpan deltaPlanExecuted)
         {

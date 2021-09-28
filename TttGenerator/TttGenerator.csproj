@@ -55,6 +55,7 @@
     <Compile Include="ReasonDeleteCommand.cs" />
     <Compile Include="Services\PlannedThreadsProcessor.cs" />
     <Compile Include="TimeConstraintCalculator.cs" />
+    <Compile Include="ViewParity.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="docs\rules.txt" />

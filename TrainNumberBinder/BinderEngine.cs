@@ -102,23 +102,19 @@ namespace BCh.KTC.TrainNumberBinder {
                 var logStr = $"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.";
                 if (plannedHeader.StateFlag == 2)
                 {
-                    found = false;
                     var currentExecutedHeader = executedHeaders.Where(x => { return x.PlannedTrainThreadId == plannedHeader.RecId; }).FirstOrDefault();
                     if (currentExecutedHeader != null)
                     {
                         var executedCurrentRecords = _passedThreadsRepository.RetrieveByHeader(currentExecutedHeader.RecId);
-                        if(executedCurrentRecords.Count > 0)
+                        if (executedCurrentRecords.Count > 0)
                         {
-                            if (executedCurrentRecords.Last().EventTime < executedRecords.First().EventTime)
-                            {
-                                if (_trainHeadersRepository.SetStateFlag(plannedHeader.RecId, 1))
-                                {
-                                    found = true;
-                                    logStr = logStr + $" Before planned was binding: {currentExecutedHeader.RecId}. {GetStrReasonReBinding(ReasonReBinding.thread_break)}";
-                                }
-                            }
+                            if (!(executedCurrentRecords.Last().EventTime < executedRecords.First().EventTime))
+                                found = false;
                         }
                     }
+                    //
+                    if (found && (found = _trainHeadersRepository.SetStateFlag(plannedHeader.RecId, 1)))
+                        logStr = logStr + $" Before planned was binding: {currentExecutedHeader.RecId}. {GetStrReasonReBinding(ReasonReBinding.thread_break)}";
                     //
                     if (!found)
                         return found;
