@@ -428,6 +428,7 @@ namespace BCh.KTC.TttGenerator
         {
             dependencyEventReference = -1;
             PlannedTrainRecord previousEvent = null;
+            PlannedTrainRecord[] previousRope = null;
             var isCrossing = (_controlledStations.ContainsKey(thread[index].Station)) ? _controlledStations[thread[index].Station].IsCrossing : false;
             arrivalToCrossing = (isCrossing && thread[index].EventType != 3) ? true : false;
             if (arrivalToCrossing)
@@ -471,10 +472,12 @@ namespace BCh.KTC.TttGenerator
                         if (previousEvent == null)
                         {
                             previousEvent = aThread[i];
+                            previousRope = aThread;
                         }
                         else if (aThread[i].PlannedTime > previousEvent.PlannedTime)
                         {
                             previousEvent = aThread[i];
+                            previousRope = aThread;
                         }
                         break;
                     }
@@ -492,13 +495,37 @@ namespace BCh.KTC.TttGenerator
             }
             else if (previousEvent.AckEventFlag == -1)
             {
-                _logger.Info($"Task -  {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} not write, because not done event - {previousEvent.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(previousEvent.TrainId))}");
-
-
+                if (IsOldDependenciesRope(previousRope))
+                {
+                    dependencyEventReference = -1;
+                    if (_trainHeadersRepo.DeletePlanRope(previousEvent.TrainId))
+                        _logger.Info($"Task -  {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} delete old rope {previousEvent.TrainId} tr:'{_trainHeadersRepo.GetTrainNumberByTrainId(previousEvent.TrainId)}'");
+                    return true;
+                }
+                else
+                    _logger.Info($"Task -  {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} not write, because not done event - {previousEvent.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(previousEvent.TrainId))}");
             }
+            //
             return false;
         }
 
+        private bool IsOldDependenciesRope(PlannedTrainRecord[] rope)
+        {
+            if(rope.Where(x=> { return x.AckEventFlag != -1; }).FirstOrDefault() == null)
+            {
+                for (var i = rope.Length - 1; i >= 0; i--)
+                {
+                    if (_controlledStations.ContainsKey(rope[i].Station))
+                    {
+                        if (DateTime.Now >= rope[i].PlannedTime)
+                            return true;
+                        break;
+                    }
+                }
+            }
+            //
+            return false;
+        }
 
         private bool IsСrossingTwoPaths(PlannedTrainRecord сurEvent, PlannedTrainRecord checkEvent)
         {
