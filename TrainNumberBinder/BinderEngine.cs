@@ -114,7 +114,7 @@ namespace BCh.KTC.TrainNumberBinder {
                     }
                     //
                     if (found && (found = _trainHeadersRepository.SetStateFlag(plannedHeader.RecId, 1)))
-                        logStr = logStr + $" Before planned was binding: {currentExecutedHeader.RecId}. {GetStrReasonReBinding(ReasonReBinding.thread_break)}";
+                        logStr = logStr + $" Before planned was binding: {(currentExecutedHeader != null ? currentExecutedHeader.RecId.ToString() : "unknown")}. {GetStrReasonReBinding(ReasonReBinding.thread_break)}";
                     //
                     if (!found)
                         return found;

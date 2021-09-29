@@ -185,6 +185,7 @@ namespace BCh.KTC.TttGenerator
                     if (existingTask.SentFlag == 3)
                     {
                         delElexistingTask = ReasonDeleteCommand.breakCommand;
+                        _logger.Debug($"Not processing -0- command break according to information from ARM.  " + thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId)));// /*+ $"{((existingTask.SentFlag == 7) ? " command for autonom station - without doing." : string.Empty)}")*/;
                     }
                     else if (existingTask.SentFlag != 4)
                     {
@@ -403,21 +404,34 @@ namespace BCh.KTC.TttGenerator
             return (axis1 == axis2);
         }
 
-        private ViewParity GetViewParityObject(string name, bool isPath)
+        private ViewParity GetViewParityObject(string name1, bool isPath, string name2 = null)
         {
             if (isPath)
             {
-                var match1 = Regex.Match(name, _patternAxis);
+                var match1 = Regex.Match(name1, _patternAxis);
                 if (match1.Success)
                     return (int.Parse(match1.Groups[1].Value) % 2 == 0) ? ViewParity.even : ViewParity.odd;
             }
             else
             {
-                if (name.ToUpper().IndexOf("Ч") != -1)
-                    return ViewParity.even;
+                if (name1.ToUpper().IndexOf("Ч") != -1)
+                {
+                    if (!string.IsNullOrEmpty(name2) && name2.ToUpper().IndexOf("Н") == -1 && Regex.IsMatch(name1.ToUpper(), @"Ч[А-Я]"))
+                        return ViewParity.odd;
+                    else
+                        return ViewParity.even;
+                }
+
                 //
-                if (name.ToUpper().IndexOf("Н") != -1)
-                    return ViewParity.odd;
+                if (name1.ToUpper().IndexOf("Н") != -1)
+                {
+                    if (!string.IsNullOrEmpty(name2) && name2.ToUpper().IndexOf("Ч") == -1 && Regex.IsMatch(name1.ToUpper(), @"Н[А-Я]"))
+                        return ViewParity.even;
+                    else
+                        return ViewParity.odd;
+                }
+                //
+
             }
             //
             return ViewParity.none;
@@ -511,16 +525,16 @@ namespace BCh.KTC.TttGenerator
 
         private bool IsOldDependenciesRope(PlannedTrainRecord[] rope)
         {
-            if(rope.Where(x=> { return x.AckEventFlag != -1; }).FirstOrDefault() == null)
+            DateTime lastAckEventOrBeginning;
+            TimeSpan deltaPlanExecuted;
+            var isBindingWithPassed = Are4ThereAnyAckEvents(rope, out lastAckEventOrBeginning, out deltaPlanExecuted);
+            for (var i = rope.Length - 1; i >= 0; i--)
             {
-                for (var i = rope.Length - 1; i >= 0; i--)
+                if (_controlledStations.ContainsKey(rope[i].Station))
                 {
-                    if (_controlledStations.ContainsKey(rope[i].Station))
-                    {
-                        if (DateTime.Now >= rope[i].PlannedTime)
-                            return true;
-                        break;
-                    }
+                    if (DateTime.Now >= (isBindingWithPassed ? rope[i].GetForecastTime2(deltaPlanExecuted) : rope[i].PlannedTime))
+                        return true;
+                    break;
                 }
             }
             //
@@ -531,7 +545,7 @@ namespace BCh.KTC.TttGenerator
         {
             if(сurEvent.Ndo != checkEvent.Ndo && сurEvent.NeighbourStationCode == checkEvent.NeighbourStationCode)
             {
-                if (GetViewParityObject(сurEvent.Axis, true) != GetViewParityObject(сurEvent.Ndo, false) || GetViewParityObject(checkEvent.Axis, true) != GetViewParityObject(checkEvent.Ndo, false))
+                if (GetViewParityObject(сurEvent.Axis, true) != GetViewParityObject(сurEvent.Ndo, false, checkEvent.Ndo) || GetViewParityObject(checkEvent.Axis, true) != GetViewParityObject(checkEvent.Ndo, false, сurEvent.Ndo))
                     return true;
             }
             //
