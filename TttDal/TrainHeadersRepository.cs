@@ -30,10 +30,10 @@ namespace BCh.KTC.TttDal {
         private const string DeletePlanEventsCmdText = "DELETE FROM TGraphicPl"
           + " WHERE Train_Idn = @trainIdn4";
 
-        //Установить (сбросить) ссылку на плановую нитку
+        //Установить (сбросить) флаг плановой нитки
         private const string BreakNormIdCmdText = "UPDATE TTrainHeaders"
           + " SET Norm_Idn = 0"
-          + " WHERE Train_Idn = @trainIdn5";
+          + " WHERE Norm_Idn = @trainIdn5";
 
 
         private readonly string _connectionString;
@@ -166,7 +166,7 @@ namespace BCh.KTC.TttDal {
             return passedId;
         }
 
-        public bool SetStateFlag(int trainId, int statFlag)
+        public bool SetStateFlag(int plannedId, int statFlag)
         {
             var result = false;
             using (var con = new FbConnection(_connectionString))
@@ -176,11 +176,19 @@ namespace BCh.KTC.TttDal {
                 {
                     _setStatFlagCmd.Connection = con;
                     _setStatFlagCmd.Transaction = tx;
+                    //
+                    _breakNordIdCmd.Connection = con;
+                    _breakNordIdCmd.Transaction = tx;
 
-                    _parTrainId3.Value = trainId;
+                    _parTrainId3.Value = plannedId;
+                    _parTrainId5.Value = plannedId;
                     _parStatFlag.Value = statFlag;
+
                     if (_setStatFlagCmd.ExecuteNonQuery() > 0)
                         result = true;
+                    //
+                    _breakNordIdCmd.ExecuteNonQuery();
+                    //
                     tx.Commit();
                 }
             }

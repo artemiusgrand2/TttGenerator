@@ -527,18 +527,8 @@ namespace BCh.KTC.TttGenerator
         {
             DateTime lastAckEventOrBeginning;
             TimeSpan deltaPlanExecuted;
-            var isBindingWithPassed = Are4ThereAnyAckEvents(rope, out lastAckEventOrBeginning, out deltaPlanExecuted);
-            for (var i = rope.Length - 1; i >= 0; i--)
-            {
-                if (_controlledStations.ContainsKey(rope[i].Station))
-                {
-                    if (DateTime.Now >= (isBindingWithPassed ? rope[i].GetForecastTime2(deltaPlanExecuted) : rope[i].PlannedTime))
-                        return true;
-                    break;
-                }
-            }
             //
-            return false;
+            return (DateTime.Now >= (Are4ThereAnyAckEvents(rope, out lastAckEventOrBeginning, out deltaPlanExecuted) ? rope[rope.Length - 1].GetForecastTime2(deltaPlanExecuted) : rope[rope.Length - 1].PlannedTime));
         }
 
         private bool IsСrossingTwoPaths(PlannedTrainRecord сurEvent, PlannedTrainRecord checkEvent)

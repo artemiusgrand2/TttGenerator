@@ -33,7 +33,6 @@ namespace BCh.KTC.TrainNumberBinder {
             var executedAndPlanned = SplitIntoExecutedAndPlanned(notBoundHeaders);
             foreach (var executedHeader in executedAndPlanned.Item1)
             {
-
                 ProcessExecutedHeader(executedHeader, executedAndPlanned.Item2, executedAndPlanned.Item1);
             }
         }
@@ -53,6 +52,17 @@ namespace BCh.KTC.TrainNumberBinder {
                         reasonReBinding = ReasonReBinding.flag1;
                     beforeBindPlanedId = executedHeader.PlannedTrainThreadId;
                 }
+                //else if(findPlanHeader != null && findPlanHeader.StateFlag == 2 && findPlanHeader.TrainNumber != executedHeader.TrainNumber)
+                //{
+                //    if (_trainHeadersRepository.SetStateFlag(findPlanHeader.RecId, 1))
+                //    {
+                //        executedHeader.PlannedTrainThreadId = 0;
+                //        findPlanHeader.StateFlag = 1;
+
+                //    }
+                //    else
+                //        return;
+                //}
                 else
                     return;
                 //if (plannedHeaders.Where(x => x.RecId == executedHeader.PlannedTrainThreadId && x.StateFlag == 1).FirstOrDefault() == null)
@@ -89,7 +99,7 @@ namespace BCh.KTC.TrainNumberBinder {
                         && (((executed.EventType == 1 || executed.EventType == 2) && planned.EventType == 2)
                           || executed.EventType == 3 && planned.EventType == 3)
                         && executed.Ndo == planned.Ndo
-                        && IsTimeDiffWithinDelta(executed.EventTime, planned.ForecastTime))
+                        && IsTimeDiffWithinDelta(executed.EventTime, planned.PlannedTime))
                     {
                         found = true;
                         passedRecordBinding = executed;
@@ -99,7 +109,7 @@ namespace BCh.KTC.TrainNumberBinder {
             }
             if (found)
             {
-                var logStr = $"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}.";
+                var logStr = $"Binding - planned: {plannedHeader.RecId} and passed: {executedHeader.RecId}. TrainNumber - {executedHeader.TrainNumber}. Event - {passedRecordBinding.ToString()}.";
                 if (plannedHeader.StateFlag == 2)
                 {
                     var currentExecutedHeader = executedHeaders.Where(x => { return x.PlannedTrainThreadId == plannedHeader.RecId; }).FirstOrDefault();
@@ -121,7 +131,7 @@ namespace BCh.KTC.TrainNumberBinder {
                 }
                 //
                 if (beforeBindPlanedId != null)
-                    logStr = logStr + $" Before passed was binding: {beforeBindPlanedId}. {GetStrReasonReBinding(reasonReBinding)}";
+                    logStr = logStr + $" Before passed was binding: {beforeBindPlanedId}. {GetStrReasonReBinding(reasonReBinding)}.";
                 _logger.Info(logStr);
                 _storedProceduresExecutor.BindPlannedAndPassedTrains(plannedHeader.RecId, executedHeader.RecId, executedHeader.TrainNumber, 51);
             }

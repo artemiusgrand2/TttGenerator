@@ -43,7 +43,7 @@ namespace BCh.KTC.TttDal
         //    + "    WHERE EV_CNFM IS NULL"
         + "    ORDER BY TRAIN_IDN, EV_TIME_P";
 
-        private const string SelectByHeaderCmdTxt = "SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicpl"
+        private const string SelectByHeaderCmdTxt = "SELECT EV_TYPE, EV_TIME_P, EV_STATION, EV_NDO FROM tgraphicpl"
           + " WHERE TRAIN_IDN = @header";
 
         private const string SetAckEventFlagCmdTxt = "UPDATE tgraphicpl "
@@ -97,7 +97,8 @@ namespace BCh.KTC.TttDal
                         var record = new PlannedTrainRecord
                         {
                             EventType = dbReader.GetInt16Safely(0),
-                            ForecastTime = dbReader.GetMinDateTimeIfNull(1),
+                            PlannedTime = dbReader.GetMinDateTimeIfNull(1),
+                            // ForecastTime = dbReader.GetMinDateTimeIfNull(1),
                             Station = dbReader.GetStringSafely(2),
                             Ndo = dbReader.GetStringSafely(3)
                         };

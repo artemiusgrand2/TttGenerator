@@ -10,7 +10,7 @@ namespace BCh.KTC.TttDal.Interfaces {
 
         List<TrainHeaderRecord> RetrieveNotBoundHeaders();
 
-        bool SetStateFlag(int trainId, int statFlag);
+        bool SetStateFlag(int plannedId, int statFlag);
 
         bool DeletePlanRope(int trainId);
     }
