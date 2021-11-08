@@ -40,8 +40,9 @@ namespace BCh.KTC.TttDal
         + "    EV_STATION, EV_AXIS, EV_NDO, EV_NE_STATION, EV_CNFM,"
         + "    LNKE_REC_IDN, FL_DEF"
         + "    FROM TGRAPHICPL"
-        //    + "    WHERE EV_CNFM IS NULL"
-        + "    ORDER BY TRAIN_IDN, EV_TIME_P";
+        //    + "    WHERE EV_CNFM IS NULL "
+        + "    ORDER BY TRAIN_IDN, Ev_Rec_Idn";
+        //+ "    ORDER BY TRAIN_IDN, EV_TIME_P";
 
         private const string SelectByHeaderCmdTxt = "SELECT EV_TYPE, EV_TIME_P, EV_STATION, EV_NDO FROM tgraphicpl"
           + " WHERE TRAIN_IDN = @header";
