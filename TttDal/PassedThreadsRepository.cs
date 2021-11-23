@@ -9,14 +9,28 @@ namespace BCh.KTC.TttDal
 {
     public class PassedThreadsRepository : IPassedThreadsRepository
     {
-        private const string SelectSqlTxt = "SELECT EV_REC_IDN, TRAIN_IDN, EV_TYPE, EV_TIME,"
-          + " EV_STATION, EV_AXIS, EV_NDO, EV_DOP, EV_NE_STATION, EV_TIME_P"
-          + " FROM TGRAPHICID"
-          + " WHERE"
-          + " EV_STATION = @station"
-          + " AND EV_NE_STATION = @neighSt"
-          + " AND(EV_TYPE = @evType1 OR EV_TYPE = @evType2)"
-          + " AND EV_TIME BETWEEN @from AND @till";
+        //private const string SelectSqlTxt = "SELECT EV_REC_IDN, TRAIN_IDN, EV_TYPE, EV_TIME,"
+        //  + " EV_STATION, EV_AXIS, EV_NDO, EV_DOP, EV_NE_STATION, EV_TIME_P"
+        //  + " FROM TGRAPHICID"
+        //  + " WHERE"
+        //  + " EV_STATION = @station"
+        //  + " AND EV_NE_STATION = @neighSt"
+        //  + " AND(EV_TYPE = @evType1 OR EV_TYPE = @evType2)"
+        //  + " AND EV_TIME BETWEEN @from AND @till";
+
+
+        private const string SelectSqlTxt = "SELECT IDs.EV_REC_IDN, IDs.TRAIN_IDN, IDs.EV_TYPE, IDs.EV_TIME,"
+        + " IDs.EV_STATION, IDs.EV_AXIS, IDs.EV_NDO, IDs.EV_DOP, IDs.EV_NE_STATION, IDs.EV_TIME_P"
+        + " FROM TGRAPHICID as IDs"
+        + " INNER JOIN (SELECT TRAIN_IDN FROM TTRAINHEADERS"
+        + " WHERE TRAIN_NUM IS NULL OR TRAIN_NUM='') H"
+        + " ON IDs.TRAIN_IDN = H.TRAIN_IDN"
+        + " WHERE"
+        + " IDs.EV_STATION = @station"
+        + " AND IDs.EV_NE_STATION = @neighSt"
+        + " AND (IDs.EV_TYPE = @evType1 OR IDs.EV_TYPE = @evType2)"
+        + " AND IDs.EV_TIME BETWEEN @from AND @till";
+
         private const string SelectByHeader = "SELECT EV_TYPE, EV_TIME, EV_STATION, EV_NDO FROM tgraphicid"
           + " WHERE TRAIN_IDN = @header";
 
