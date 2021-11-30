@@ -17,8 +17,8 @@ namespace BCh.KTC.PlExBinder {
     private readonly IStoredProcExecutor _storedProceduresExecutor;
     private readonly IDeferredTaskStorage _deferredTaskStorage;
     private readonly BinderConfigDto _config;
-        private readonly IList<string> _trainsNumber;
-
+    private readonly IList<string> _trainsNumber;
+        private readonly IList<string> _stationNotBinding;
 
         public BinderEngine(IPlannedThreadsRepository plannedThreadsRepository,
             IPassedThreadsRepository passedThreadsRepository,
@@ -26,7 +26,8 @@ namespace BCh.KTC.PlExBinder {
             IStoredProcExecutor storedProceduresExecutor,
             IDeferredTaskStorage deferredTaskStorage,
             BinderConfigDto config,
-            IList<string> trainsNumber
+            IList<string> trainsNumber,
+            IList<string> stationNotBinding
             )
         {
             _plannedThreadsRepository = plannedThreadsRepository;
@@ -36,13 +37,14 @@ namespace BCh.KTC.PlExBinder {
             _deferredTaskStorage = deferredTaskStorage;
             _config = config;
             _trainsNumber = trainsNumber;
+            _stationNotBinding = stationNotBinding;
         }
 
     public void ExecuteBindingCycle(DateTime executionTime) {
       ExecuteDeferredTasks(executionTime);
       List<PlannedTrainRecord> plannedRecords = _plannedThreadsRepository.RetrievePlannedThreads(executionTime);
             if (_trainsNumber.Count > 0)
-                plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber)).ToList();
+                plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber) && !_stationNotBinding.Contains(x.StationShort)).ToList();
       plannedRecords = FilterOutAlreadyDefinedInDeferredTasks(plannedRecords);
       FormDeferredTasks(plannedRecords);
     }

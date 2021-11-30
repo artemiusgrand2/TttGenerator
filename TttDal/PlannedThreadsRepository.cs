@@ -144,11 +144,7 @@ namespace BCh.KTC.TttDal
                             //PlannedEventReference { get; set; } // lnke_rec_idn
                             //AutopilotState { get; set; } // fl_def
                         };
-                        //if (record.Station.Length == 8)
-                        //{
-                        //    record.Station = record.Station.Substring(2, 6);
-                        //    record.NeighbourStationCode = record.NeighbourStationCode.Substring(2, 6);
-                        //}
+                        record.StationShort = (record.Station.Length == 8) ? record.Station.Substring(2, 6) : record.Station;
                         records.Add(record);
                     }
                 }

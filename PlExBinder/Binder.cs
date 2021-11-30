@@ -39,11 +39,13 @@ namespace BCh.KTC.PlExBinder
             if (!string.IsNullOrEmpty(BinderConfig.GetUrlCategoriesTrain()) && !AGDPConfig.IsTryUrl(BinderConfig.GetUrlCategoriesTrain()))
                 _logger.Info("urlCategories  incorrect");
             var trainNumbers = AGDPConfig.GetTrainNumers(BinderConfig.GetUrlCategoriesTrain(), BinderConfig.GetCategoriesTrain());
-            _logger.Info($"TrainNumber: {GetNumberForStr(trainNumbers)}");
+            _logger.Info($"TrainNumber: {ConvertListStrForStr(trainNumbers)}");
+            var stationNotBinding = BinderConfig.GetStationNotBinding();
+            _logger.Info($"StationNotBinding: {ConvertListStrForStr(stationNotBinding)}");
             IDeferredTaskStorage deferredTaskStorage = new DeferredTaskStorage();
             BinderConfigDto config = BinderConfig.GetBinderConfig();
             _engine = new BinderEngine(plannedThreadsRepository, passedThreadsRepository,
-              trainHeadersRepository, storedProcExecutor, deferredTaskStorage, config, trainNumbers);
+              trainHeadersRepository, storedProcExecutor, deferredTaskStorage, config, trainNumbers, stationNotBinding);
 
 
             int cycleTime = BinderConfig.GetCycleTime();
@@ -85,7 +87,7 @@ namespace BCh.KTC.PlExBinder
             _timer.Enabled = true;
         }
 
-        private string GetNumberForStr(IList<string> trainNumbers)
+        private string ConvertListStrForStr(IList<string> trainNumbers)
         {
             var strBuilder = new StringBuilder();
             foreach (var trainNumber in trainNumbers)

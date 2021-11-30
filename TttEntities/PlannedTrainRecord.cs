@@ -19,6 +19,8 @@ namespace BCh.KTC.TttEntities
         public int AutopilotState { get; set; } // fl_def
         public string TrainNumber { get; set; }
 
+        public string StationShort { get; set; }
+
         public override string ToString()
         {
             return string.Format($"{TrainId} st:{Station} a:{Axis} ndo:{Ndo} {((EventType == 3)?"dep":"arr")} pt:{PlannedTime.ToShortTimeString()}");

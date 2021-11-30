@@ -44,6 +44,14 @@ namespace BCh.KTC.PlExBinder.Config
             return string.Empty;
         }
 
+        public static IList<string> GetStationNotBinding()
+        {
+            if (ConfigurationManager.AppSettings.AllKeys.Contains("StationNotBinding"))
+                return ConfigurationManager.AppSettings["StationNotBinding"].Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+            //
+            return new List<string>();
+        }
+
         public static BinderConfigDto GetBinderConfig()
         {
             var configDto = new BinderConfigDto
