@@ -74,18 +74,21 @@ namespace BCh.KTC.PlExBinder {
         }
 
 
-    private void CleanUpBoundTasks() {
-      List<DeferredTask> tasks = _deferredTaskStorage.GetDeferredTasks();
-      foreach (var task in tasks) {
-        if (task.HasBindingCmdBeenGenerated) {
-          bool isBound = _trainHeadersRepository.IsTrainThreadBound(task.TrainId);
-          if (isBound) {
-            _deferredTaskStorage.DeleteAllTasksWithTrainId(task.TrainId);
-            _logger.InfoFormat("Cleaned up tasks for the bound thread (TrainId: {0})", task.TrainId);
-          }
+        private void CleanUpBoundTasks()
+        {
+            List<DeferredTask> tasks = _deferredTaskStorage.GetDeferredTasks();
+            foreach (var task in tasks)
+            {
+                //if (task.HasBindingCmdBeenGenerated) {
+                bool isBound = _trainHeadersRepository.IsTrainThreadBound(task.TrainId);
+                if (isBound)
+                {
+                    _deferredTaskStorage.DeleteAllTasksWithTrainId(task.TrainId);
+                    _logger.InfoFormat("Cleaned up tasks for the bound thread (TrainId: {0})", task.TrainId);
+                }
+                //  }
+            }
         }
-      }
-    }
 
     private void FormDeferredTasks(List<PlannedTrainRecord> plannedRecords) {
       foreach (var record in plannedRecords) {
