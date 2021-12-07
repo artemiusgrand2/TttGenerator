@@ -8,16 +8,16 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace BCh.KTC.PlExBinder {
-  public class BinderEngine {
-    private static readonly ILog _logger = LogManager.GetLogger(typeof(BinderEngine));
+    public class BinderEngine {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(BinderEngine));
 
-    private readonly IPlannedThreadsRepository _plannedThreadsRepository;
-    private readonly IPassedThreadsRepository _passedThreadsRepository;
-    private readonly ITrainHeadersRepository _trainHeadersRepository;
-    private readonly IStoredProcExecutor _storedProceduresExecutor;
-    private readonly IDeferredTaskStorage _deferredTaskStorage;
-    private readonly BinderConfigDto _config;
-    private readonly IList<string> _trainsNumber;
+        private readonly IPlannedThreadsRepository _plannedThreadsRepository;
+        private readonly IPassedThreadsRepository _passedThreadsRepository;
+        private readonly ITrainHeadersRepository _trainHeadersRepository;
+        private readonly IStoredProcExecutor _storedProceduresExecutor;
+        private readonly IDeferredTaskStorage _deferredTaskStorage;
+        private readonly BinderConfigDto _config;
+        private readonly IList<string> _trainsNumber;
         private readonly IList<string> _stationNotBinding;
 
         public BinderEngine(IPlannedThreadsRepository plannedThreadsRepository,
@@ -40,18 +40,20 @@ namespace BCh.KTC.PlExBinder {
             _stationNotBinding = stationNotBinding;
         }
 
-    public void ExecuteBindingCycle(DateTime executionTime) {
-      ExecuteDeferredTasks(executionTime);
-      List<PlannedTrainRecord> plannedRecords = _plannedThreadsRepository.RetrievePlannedThreads(executionTime);
+        public void ExecuteBindingCycle(DateTime executionTime) {
+            ExecuteDeferredTasks(executionTime);
+            List<PlannedTrainRecord> plannedRecords = _plannedThreadsRepository.RetrievePlannedThreads(executionTime);
             if (_trainsNumber.Count > 0)
                 plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber) && !_stationNotBinding.Contains(x.StationShort)).ToList();
-      plannedRecords = FilterOutAlreadyDefinedInDeferredTasks(plannedRecords);
-      FormDeferredTasks(plannedRecords);
-    }
+            plannedRecords = FilterOutAlreadyDefinedInDeferredTasks(plannedRecords, executionTime.AddMinutes(-_config.DeferredTimeLifespan));
+            FormDeferredTasks(plannedRecords);
+        }
 
         private void ExecuteDeferredTasks(DateTime executionTime)
         {
-            _deferredTaskStorage.CleanUpOldTask(executionTime.AddMinutes(-_config.DeferredTimeLifespan));
+            foreach(var message in _deferredTaskStorage.CleanUpOldTask(executionTime.AddMinutes(-_config.DeferredTimeLifespan)))
+                _logger.Info(message);
+            //
             CleanUpBoundTasks();
 
             // execution itself
@@ -90,37 +92,40 @@ namespace BCh.KTC.PlExBinder {
             }
         }
 
-    private void FormDeferredTasks(List<PlannedTrainRecord> plannedRecords) {
-      foreach (var record in plannedRecords) {
-        bool doesSimilarOneExist = _deferredTaskStorage.DoesSimilarOneExist(
-          record.Station, record.EventType, record.Axis, record.Ndo);
-        if (doesSimilarOneExist) continue;
-        var deferredTask = new DeferredTask {
-          EventId = record.RecId,
-          TrainId = record.TrainId,
-          EventType = record.EventType,
-          EventStation = record.Station,
-          PlannedTime = record.PlannedTime,
-          NeighbourStationCode = record.NeighbourStationCode,
-          EventAxis = record.Axis,
-          EventNdoObject = record.Ndo,
-          CreationTime = DateTime.Now,
-          HasBindingCmdBeenGenerated = false
-        };
-        _deferredTaskStorage.AddTask(deferredTask);
-        _logger.InfoFormat("A deferred task created (id: {0}; trId: {1}; type: {2}; station: {3};  trainNumber {4}",
-          record.RecId, record.TrainId, record.EventType, record.Station, record.TrainNumber);
-      }
-    }
-
-    private List<PlannedTrainRecord> FilterOutAlreadyDefinedInDeferredTasks(List<PlannedTrainRecord> records) {
-      var result = new List<PlannedTrainRecord>();
-      foreach (var record in records) {
-        if (!_deferredTaskStorage.DoesTaskExistForEventId(record.RecId)) {
-          result.Add(record);
+        private void FormDeferredTasks(List<PlannedTrainRecord> plannedRecords) {
+            foreach (var record in plannedRecords) {
+                bool doesSimilarOneExist = _deferredTaskStorage.DoesSimilarOneExist(
+                  record.Station, record.EventType, record.Axis, record.Ndo);
+                if (doesSimilarOneExist) continue;
+                var deferredTask = new DeferredTask {
+                    EventId = record.RecId,
+                    TrainId = record.TrainId,
+                    EventType = record.EventType,
+                    EventStation = record.Station,
+                    PlannedTime = record.PlannedTime,
+                    NeighbourStationCode = record.NeighbourStationCode,
+                    EventAxis = record.Axis,
+                    EventNdoObject = record.Ndo,
+                    CreationTime = DateTime.Now,
+                    HasBindingCmdBeenGenerated = false
+                };
+                _deferredTaskStorage.AddTask(deferredTask);
+                _logger.InfoFormat("A deferred task created (id: {0}; trId: {1}; type: {2}; station: {3};  trainNumber {4})",
+                  record.RecId, record.TrainId, record.EventType, record.Station, record.TrainNumber);
+            }
         }
-      }
-      return result;
+
+        private List<PlannedTrainRecord> FilterOutAlreadyDefinedInDeferredTasks(List<PlannedTrainRecord> records, DateTime untilTime)
+        {
+            var result = new List<PlannedTrainRecord>();
+            foreach (var record in records)
+            {
+                if (!_deferredTaskStorage.DoesTaskExistForEventId(record.RecId) && (record.PlannedTime >= untilTime))
+                {
+                    result.Add(record);
+                }
+            }
+            return result;
+        }
     }
-  }
 }

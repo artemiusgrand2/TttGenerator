@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace BCh.KTC.PlExBinder.Interfaces {
   public interface IDeferredTaskStorage {
     bool DoesTaskExistForEventId(int eventId);
-    void CleanUpOldTask(DateTime untilTime);
+    IList<string> CleanUpOldTask(DateTime untilTime);
     void AddTask(DeferredTask task);
     void DeleteAllTasksWithTrainId(int trainId);
     List<DeferredTask> GetDeferredTasks();

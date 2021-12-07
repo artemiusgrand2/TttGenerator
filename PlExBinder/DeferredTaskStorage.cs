@@ -16,17 +16,25 @@ namespace BCh.KTC.PlExBinder {
       _tasks.Add(task.EventId, task);
     }
 
-    public void CleanUpOldTask(DateTime untilTime) {
-      var toCleanUp = new List<int>();
-      foreach (var task in _tasks) {
-        if (task.Value.PlannedTime < untilTime) {
-          toCleanUp.Add(task.Key);
+        public IList<string> CleanUpOldTask(DateTime untilTime)
+        {
+            var toCleanUp = new List<int>();
+            var result = new List<string>();
+            foreach (var task in _tasks)
+            {
+                if (task.Value.PlannedTime < untilTime)
+                {
+                    toCleanUp.Add(task.Key);
+                }
+            }
+            foreach (var key in toCleanUp)
+            {
+                result.Add($"Task delete (id: {key}; trId: {_tasks[key].TrainId}; type: {_tasks[key].EventType}; station: {_tasks[key].EventStation}) ,because it timed out");
+                _tasks.Remove(key);
+            }
+            //
+            return result;
         }
-      }
-      foreach (var key in toCleanUp) {
-        _tasks.Remove(key);
-      }
-    }
 
     public void DeleteAllTasksWithTrainId(int trainId) {
       var toCleanUp = new List<int>();
