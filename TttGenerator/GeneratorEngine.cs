@@ -279,6 +279,10 @@ namespace BCh.KTC.TttGenerator
                 //    task.SentFlag = 4;
                 if (arrivalToCrossing)
                     task.SentFlag = 4;
+                //only ron
+                var onlyRon = IsOnlyRonForStationEvent(thread, index);
+                if (onlyRon)
+                    task.SentFlag = (thread[index].EventType != 3) ? 4 : 7;
                 //autonom station
                 var isAutonomous = IsAutonomousForStationEvent(thread, index);
                 if (isAutonomous)
@@ -342,6 +346,16 @@ namespace BCh.KTC.TttGenerator
             }
             //
             return _controlledStations[threads[index].Station].Autonomous;
+        }
+
+        private bool IsOnlyRonForStationEvent(PlannedTrainRecord[] threads, int index)
+        {
+            if (!_controlledStations.ContainsKey(threads[index].Station))
+            {
+                return false;
+            }
+            //
+            return _controlledStations[threads[index].Station].OnlyRon;
         }
 
         //private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)

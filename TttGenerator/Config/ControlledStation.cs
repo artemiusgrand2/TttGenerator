@@ -10,16 +10,19 @@ namespace BCh.KTC.TttGenerator.Config {
         public bool IsCrossing { get; private set; }
         public bool Autonomous { get; private set; }
 
+        public bool OnlyRon { get; private set; }
+
         public IList<string> ListStNotDep { get; private set; } = new List<string>();
         public List<StationTimeRecord> StationTimeRecords { get; private set; }
 
-        public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing, string listStNotDep, bool autonomous)
+        public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing, string listStNotDep, bool autonomous, bool onlyRon)
         {
             StationCode = stationCode;
             AllowGeneratingNotCfmArrival = allowGenNotCfmArr;
             AllowGeneratingNotCfmDeparture = allowGenNotCnfDep;
             IsCrossing = isCrossing;
             Autonomous = autonomous;
+            OnlyRon = onlyRon;
             if (!string.IsNullOrEmpty(listStNotDep))
                 ListStNotDep = listStNotDep.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
             StationTimeRecords = new List<StationTimeRecord>();
