@@ -280,7 +280,7 @@ namespace BCh.KTC.TttGenerator
                 if (arrivalToCrossing)
                     task.SentFlag = 4;
                 //only ron
-                var onlyRon = IsOnlyRonForStationEvent(thread, index);
+                var onlyRon = IsOnlyRonForStationEvent(thread[index]);
                 if (onlyRon)
                     task.SentFlag = (thread[index].EventType != 3) ? 4 : 7;
                 //autonom station
@@ -348,14 +348,14 @@ namespace BCh.KTC.TttGenerator
             return _controlledStations[threads[index].Station].Autonomous;
         }
 
-        private bool IsOnlyRonForStationEvent(PlannedTrainRecord[] threads, int index)
+        private bool IsOnlyRonForStationEvent(PlannedTrainRecord plannedRecord)
         {
-            if (!_controlledStations.ContainsKey(threads[index].Station))
+            if (!_controlledStations.ContainsKey(plannedRecord.Station))
             {
                 return false;
             }
             //
-            return _controlledStations[threads[index].Station].OnlyRon;
+            return _controlledStations[plannedRecord.Station].OnlyRon;
         }
 
         //private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)
@@ -387,9 +387,12 @@ namespace BCh.KTC.TttGenerator
                 if (prevPlannedTrainRecord != null &&
                     plannedTrainRecord.Station == prevPlannedTrainRecord.Station /*&& plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis*/ && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis))
                 {
-                    task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
-                    _logger.Info($"Task -  {plannedTrainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId))} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
-                    // task.SentFlag = 6;
+                    if (!IsOnlyRonForStationEvent(plannedTrainRecord))
+                    {
+                        task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
+                        _logger.Info($"Task -  {plannedTrainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId))} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
+                        // task.SentFlag = 6;
+                    }
                 }
             }
             //
