@@ -13,9 +13,11 @@ namespace BCh.KTC.TttGenerator.Config {
         public bool OnlyRon { get; private set; }
 
         public IList<string> ListStNotDep { get; private set; } = new List<string>();
+
+        public IList<string> ListAxisEqualsForNumberAndDifDir { get; private set; } = new List<string>();
         public List<StationTimeRecord> StationTimeRecords { get; private set; }
 
-        public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing, string listStNotDep, bool autonomous, bool onlyRon)
+        public ControlledStation(string stationCode, bool allowGenNotCfmArr, bool allowGenNotCnfDep, bool isCrossing, string listStNotDep, bool autonomous, bool onlyRon, string listAxisEqualsForNumberAndDifDir)
         {
             StationCode = stationCode;
             AllowGeneratingNotCfmArrival = allowGenNotCfmArr;
@@ -25,6 +27,10 @@ namespace BCh.KTC.TttGenerator.Config {
             OnlyRon = onlyRon;
             if (!string.IsNullOrEmpty(listStNotDep))
                 ListStNotDep = listStNotDep.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+            //
+            if (!string.IsNullOrEmpty(listAxisEqualsForNumberAndDifDir))
+                ListAxisEqualsForNumberAndDifDir = listAxisEqualsForNumberAndDifDir.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+            //
             StationTimeRecords = new List<StationTimeRecord>();
         }
   }

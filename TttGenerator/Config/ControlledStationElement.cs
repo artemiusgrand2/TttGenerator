@@ -11,6 +11,7 @@ namespace BCh.KTC.TttGenerator.Config {
     private static readonly ConfigurationPropertyCollection _properties; 
     private static readonly ConfigurationProperty _autonomous;
     private static readonly ConfigurationProperty _onlyRon;
+        private static readonly ConfigurationProperty _listAxisEqualsForNumberAndDifDir;
 
         static ControlledStationElement()
         {
@@ -22,7 +23,8 @@ namespace BCh.KTC.TttGenerator.Config {
             _autonomous = new ConfigurationProperty("Autonomous", typeof(bool), false);
             _onlyRon = new ConfigurationProperty("onlyRon", typeof(bool), false);
             _listStNotDep =  new ConfigurationProperty("ListStNotDep", typeof(string), string.Empty);
-            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing,  _listStNotDep, _autonomous, _onlyRon };
+            _listAxisEqualsForNumberAndDifDir = new ConfigurationProperty("ListAxisEqualsForNumberAndDifDir", typeof(string), string.Empty);
+            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing,  _listStNotDep, _autonomous, _onlyRon , _listAxisEqualsForNumberAndDifDir };
         }
 
     public string Id {
@@ -62,6 +64,12 @@ namespace BCh.KTC.TttGenerator.Config {
         {
             get { return (bool)base[_onlyRon]; }
             set { base[_onlyRon] = value; }
+        }
+
+        public string ListAxisEqualsForNumberAndDifDir
+        {
+            get { return base[_listAxisEqualsForNumberAndDifDir] as string; }
+            set { base[_listAxisEqualsForNumberAndDifDir] = value; }
         }
 
         protected override ConfigurationPropertyCollection Properties {

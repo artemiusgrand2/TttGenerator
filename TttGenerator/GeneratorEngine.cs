@@ -385,7 +385,7 @@ namespace BCh.KTC.TttGenerator
                 task.RouteEndObjectName = plannedTrainRecord.Ndo;
                 //
                 if (prevPlannedTrainRecord != null &&
-                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station /*&& plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis*/ && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis))
+                    plannedTrainRecord.Station == prevPlannedTrainRecord.Station /*&& plannedTrainRecord.Axis != prevPlannedTrainRecord.Axis*/ && !EqualsAxis(plannedTrainRecord.Axis, prevPlannedTrainRecord.Axis, plannedTrainRecord.Station))
                 {
                     if (!IsOnlyRonForStationEvent(plannedTrainRecord))
                     {
@@ -404,7 +404,7 @@ namespace BCh.KTC.TttGenerator
             return task;
         }
 
-        private bool EqualsAxis(string axis1, string axis2)
+        private bool EqualsAxis(string axis1, string axis2, string station)
         {
         
             var match1 = Regex.Match(axis1, _patternAxis);
@@ -414,7 +414,7 @@ namespace BCh.KTC.TttGenerator
                 if (match2.Success)
                 {
                     if (match1.Groups.Count > 1 && match2.Groups.Count > 1)
-                        return (match1.Groups[1].Value == match2.Groups[1].Value);
+                        return (match1.Groups[1].Value == match2.Groups[1].Value && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis1) && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis2));
                 }
             }
             //
