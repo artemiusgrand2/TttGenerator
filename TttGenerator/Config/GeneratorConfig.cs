@@ -43,6 +43,19 @@ namespace BCh.KTC.TttGenerator.Config {
             return 2;
         }
 
+
+        public static int GetOnlyRonTime()
+        {
+            if (ConfigurationManager.AppSettings.AllKeys.Contains("onlyRonTime"))
+            {
+                int buffer;
+                if (int.TryParse(ConfigurationManager.AppSettings["onlyRonTime"], out buffer) && buffer >= 0)
+                    return buffer;
+            }
+            //
+            return 0;
+        }
+
         public static Dictionary<string, ControlledStation> GetControlledStations() {
       var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
       var engineSection = config.GetSection("engine") as EngineSection;

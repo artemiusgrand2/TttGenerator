@@ -12,16 +12,18 @@ namespace BCh.KTC.TttGenerator {
     private readonly Dictionary<string, ControlledStation> _controlledStations;
         private readonly ITrainHeadersRepository _trainHeadersRepo;
         private readonly int _reserveTime; // 1 - 2 minutes
+        private readonly int _onlyRonTime;
     private readonly int _advanceCmdExePeriod;
 
         public TimeConstraintCalculator(Dictionary<string, ControlledStation> controlledStations,
             int reserveTime,
-            int advanceCmdExePeriod, ITrainHeadersRepository trainHeadersRepo)
+            int advanceCmdExePeriod, ITrainHeadersRepository trainHeadersRepo, int onlyRonTime)
         {
             _controlledStations = controlledStations;
             _reserveTime = reserveTime;
             _advanceCmdExePeriod = advanceCmdExePeriod;
             _trainHeadersRepo = trainHeadersRepo;
+            _onlyRonTime = onlyRonTime;
         }
 
         public bool HaveTimeConstraintsBeenPassed(PlannedTrainRecord[] threads,
@@ -77,41 +79,52 @@ namespace BCh.KTC.TttGenerator {
             return result;
         }
 
-    private int GetConfiguredTimeInterval(ControlledStation station, int intervalType, PlannedTrainRecord trainRecord) {
-      foreach (var timeRecord in station.StationTimeRecords) {
-        if (timeRecord.TimeType != intervalType) continue;
-        string objStart;
-        string objEnd;
-        if (trainRecord.EventType != 3) { // arrival
-          objStart = trainRecord.Ndo;
-          objEnd = trainRecord.Axis;
-        } else {
-          objStart = trainRecord.Axis;
-          objEnd = trainRecord.Ndo;
+        private int GetConfiguredTimeInterval(ControlledStation station, int intervalType, PlannedTrainRecord trainRecord)
+        {
+            foreach (var timeRecord in station.StationTimeRecords)
+            {
+                if (timeRecord.TimeType != intervalType) continue;
+                string objStart;
+                string objEnd;
+                if (trainRecord.EventType != 3)
+                { // arrival
+                    objStart = trainRecord.Ndo;
+                    objEnd = trainRecord.Axis;
                 }
-        switch (timeRecord.TimeType) {
-          case 1:
-          case 4:
-            if (timeRecord.StartObjectName == objStart) {
-              return timeRecord.TimeValue;
+                else
+                {
+                    objStart = trainRecord.Axis;
+                    objEnd = trainRecord.Ndo;
+                }
+                switch (timeRecord.TimeType)
+                {
+                    case 1:
+                    case 4:
+                        if (timeRecord.StartObjectName == objStart)
+                        {
+                            return timeRecord.TimeValue;
+                        }
+                        break;
+                    case 2:
+                    case 3:
+                    case 5:
+                        if (timeRecord.StartObjectName == objStart
+                            && timeRecord.EndObjectName == objEnd && ((trainRecord.EventType != 3 && timeRecord.EndObjectType == 3) || (trainRecord.EventType == 3 && timeRecord.StartObjectType == 3)))
+                        {
+                            return timeRecord.TimeValue;
+                        }
+                        break;
+                    default:
+                        _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
+                        break;
+                }
             }
-            break;
-          case 2:
-          case 3:
-          case 5:
-            if (timeRecord.StartObjectName == objStart
-                && timeRecord.EndObjectName == objEnd && ((trainRecord.EventType != 3 && timeRecord.EndObjectType == 3) || (trainRecord.EventType == 3 && timeRecord.StartObjectType == 3))) {
-              return timeRecord.TimeValue;
-            }
-            break;
-          default:
-            _logger.Error($"Unknown time type found ({timeRecord.TimeType}) for station {station.StationCode} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
-            break;
+            _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
+            //
+            if (station.OnlyRon)
+                return _onlyRonTime;
+            return 0;
         }
-      }
-      _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
-      return 0;
-    }
 
     private int CalculateDefaultDelta(PlannedTrainRecord[] thread, int index) {
       int delta = 0;
