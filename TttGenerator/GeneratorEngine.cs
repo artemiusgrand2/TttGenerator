@@ -313,7 +313,7 @@ namespace BCh.KTC.TttGenerator
                 if (thread[i].AckEventFlag == 2)
                 {
                     result = true;
-                    if (_controlledStations.ContainsKey(thread[i].Station))
+                    if (_controlledStations.ContainsKey(thread[i].Station) && _controlledStations[thread[i].Station].IsComparePlanWithPassed)
                     {
                         deltaPlanExecuted = (thread[i].ForecastTime - thread[i].PlannedTime);
                         break;
