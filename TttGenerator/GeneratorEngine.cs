@@ -351,11 +351,18 @@ namespace BCh.KTC.TttGenerator
         private bool IsOnlyRonForStationEvent(PlannedTrainRecord plannedRecord)
         {
             if (!_controlledStations.ContainsKey(plannedRecord.Station))
-            {
                 return false;
+            //
+            var onlyRonAll = _controlledStations[plannedRecord.Station].OnlyRon;
+            if (onlyRonAll)
+                return true;
+            else
+            {
+                if (plannedRecord.EventType == 3 && _controlledStations[plannedRecord.Station].OnlyRonStations.Contains(plannedRecord.NeighbourStationCode))
+                    return true;
             }
             //
-            return _controlledStations[plannedRecord.Station].OnlyRon;
+            return false;
         }
 
         //private bool IsEventWithinPrevAckPeriodFromBeninning(PlannedTrainRecord[] threads, int index)

@@ -13,6 +13,7 @@ namespace BCh.KTC.TttGenerator.Config {
     private static readonly ConfigurationProperty _onlyRon;
         private static readonly ConfigurationProperty _listAxisEqualsForNumberAndDifDir;
         private static readonly ConfigurationProperty _isComparePlanWithPassed;
+        private static readonly ConfigurationProperty _onlyRonStations;
 
         static ControlledStationElement()
         {
@@ -26,7 +27,8 @@ namespace BCh.KTC.TttGenerator.Config {
             _listStNotDep =  new ConfigurationProperty("ListStNotDep", typeof(string), string.Empty);
             _listAxisEqualsForNumberAndDifDir = new ConfigurationProperty("ListAxisEqualsForNumberAndDifDir", typeof(string), string.Empty);
             _isComparePlanWithPassed = new ConfigurationProperty("IsComparePlanWithPassed", typeof(bool), true);
-            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing,  _listStNotDep, _autonomous, _onlyRon , _listAxisEqualsForNumberAndDifDir, _isComparePlanWithPassed };
+            _onlyRonStations = new ConfigurationProperty("onlyRonStations", typeof(string), string.Empty);
+            _properties = new ConfigurationPropertyCollection { _id, _genNotCfmArr, _genNotCfmDep, _isCrossing,  _listStNotDep, _autonomous, _onlyRon , _listAxisEqualsForNumberAndDifDir, _isComparePlanWithPassed , _onlyRonStations};
         }
 
     public string Id {
@@ -78,6 +80,12 @@ namespace BCh.KTC.TttGenerator.Config {
         {
             get { return (bool)base[_isComparePlanWithPassed]; }
             set { base[_isComparePlanWithPassed] = value; }
+        }
+
+        public string onlyRonStations
+        {
+            get { return base[_onlyRonStations] as string; }
+            set { base[_onlyRonStations] = value; }
         }
 
         protected override ConfigurationPropertyCollection Properties {

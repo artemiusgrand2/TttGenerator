@@ -121,7 +121,7 @@ namespace BCh.KTC.TttGenerator {
             }
             _logger.Warn($"No time record is found for {station.StationCode} and interval type: {intervalType} {trainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(trainRecord.TrainId))}");
             //
-            if (station.OnlyRon)
+            if (station.OnlyRon || station.OnlyRonStations.Contains(trainRecord.NeighbourStationCode))
                 return _onlyRonTime;
             return 0;
         }
