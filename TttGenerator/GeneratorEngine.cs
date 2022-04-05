@@ -398,7 +398,7 @@ namespace BCh.KTC.TttGenerator
                     {
                         task.RouteStartObjectName = prevPlannedTrainRecord.Axis;
                         _logger.Info($"Task -  {plannedTrainRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId))} replace path departure with {plannedTrainRecord.Axis} on {prevPlannedTrainRecord.Axis}.");
-                        // task.SentFlag = 6;
+                         task.SentFlag = 6;
                     }
                 }
             }
