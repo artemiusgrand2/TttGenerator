@@ -413,15 +413,17 @@ namespace BCh.KTC.TttGenerator
 
         private bool EqualsAxis(string axis1, string axis2, string station)
         {
-        
-            var match1 = Regex.Match(axis1, _patternAxis);
-            if (match1.Success)
+            if (axis1 != axis2)
             {
-                var match2 = Regex.Match(axis2, _patternAxis);
-                if (match2.Success)
+                var match1 = Regex.Match(axis1, _patternAxis);
+                if (match1.Success)
                 {
-                    if (match1.Groups.Count > 1 && match2.Groups.Count > 1)
-                        return (match1.Groups[1].Value == match2.Groups[1].Value && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis1) && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis2));
+                    var match2 = Regex.Match(axis2, _patternAxis);
+                    if (match2.Success)
+                    {
+                        if (match1.Groups.Count > 1 && match2.Groups.Count > 1)
+                            return (match1.Groups[1].Value == match2.Groups[1].Value && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis1) && !_controlledStations[station].ListAxisEqualsForNumberAndDifDir.Contains(axis2));
+                    }
                 }
             }
             //
