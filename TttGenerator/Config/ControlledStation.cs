@@ -27,7 +27,7 @@ namespace BCh.KTC.TttGenerator.Config {
             Autonomous = autonomous;
             OnlyRon = onlyRon;
             if (!string.IsNullOrEmpty(listStNotDep))
-                ListStNotDep = listStNotDep.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+                ListStNotDep = listStNotDep.Split(new char[] { ',' }, System.StringSplitOptions.None).Distinct().ToList();
             //
             if (!string.IsNullOrEmpty(listAxisEqualsForNumberAndDifDir))
                 ListAxisEqualsForNumberAndDifDir = listAxisEqualsForNumberAndDifDir.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
