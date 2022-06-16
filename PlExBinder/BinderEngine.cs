@@ -40,11 +40,15 @@ namespace BCh.KTC.PlExBinder {
             _stationNotBinding = stationNotBinding;
         }
 
-        public void ExecuteBindingCycle(DateTime executionTime) {
+        public void ExecuteBindingCycle(DateTime executionTime)
+        {
             ExecuteDeferredTasks(executionTime);
             List<PlannedTrainRecord> plannedRecords = _plannedThreadsRepository.RetrievePlannedThreads(executionTime);
+            //фильтр по номера поезда
             if (_trainsNumber.Count > 0)
-                plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber) && !_stationNotBinding.Contains(x.StationShort)).ToList();
+                plannedRecords = plannedRecords.Where(x => _trainsNumber.Contains(x.TrainNumber)).ToList();
+            //фильтр по станциям
+            plannedRecords = plannedRecords.Where(x => !_stationNotBinding.Contains(x.StationShort)).ToList();
             plannedRecords = FilterOutAlreadyDefinedInDeferredTasks(plannedRecords, executionTime.AddMinutes(-_config.DeferredTimeLifespan));
             FormDeferredTasks(plannedRecords);
         }
