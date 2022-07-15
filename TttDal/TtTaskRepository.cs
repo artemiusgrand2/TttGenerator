@@ -5,42 +5,43 @@ using BCh.KTC.TttDal.Interfaces;
 using System.Collections.Generic;
 
 namespace BCh.KTC.TttDal {
-  public class TtTaskRepository : ITtTaskRepository {
-    private const string SelectCmdText = "SELECT"
-    + " DEF_IDN, ST_CODE, TR_NUM_P, TR_NUM, TR_NUM_S, OB_STT_TYPE, OB_STT_NAME,"
-    + " OB_END_TYPE, OB_END_NAME, STAY_FND, LNK_DEF_IDN_N, LNK_DEF_IDN_E,"
-    + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, STD_FORM, FL_SND, RUN_CODE, CHK_SUM"
-    + " FROM TCOMDEFINITIONS"
-    + " ORDER BY EV_IDN_PLN";
-    private const string InsertCmdText = "INSERT INTO TCOMDEFINITIONS"
-    + " (ST_CODE, TR_NUM,"
-    + " OB_STT_TYPE, OB_STT_NAME, OB_END_TYPE, OB_END_NAME,"
-    + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, LNK_DEF_IDN_E, STD_FORM, FL_SND)"
-    + " VALUES (@station, @trainNumber, @startObjType, @startObjName, @endObjType, @endObjName,"
-    + " @eventRecId, @execTime, @creationTime, @depEvRef, 2, @flSnd)";
+    public class TtTaskRepository : ITtTaskRepository
+    {
+        private const string SelectCmdText = "SELECT"
+        + " DEF_IDN, ST_CODE, TR_NUM_P, TR_NUM, TR_NUM_S, OB_STT_TYPE, OB_STT_NAME,"
+        + " OB_END_TYPE, OB_END_NAME, STAY_FND, LNK_DEF_IDN_N, LNK_DEF_IDN_E,"
+        + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, STD_FORM, FL_SND, RUN_CODE, CHK_SUM"
+        + " FROM TCOMDEFINITIONS"
+        + " ORDER BY EV_IDN_PLN";
+        private const string InsertCmdText = "INSERT INTO TCOMDEFINITIONS"
+        + " (ST_CODE, TR_NUM,"
+        + " OB_STT_TYPE, OB_STT_NAME, OB_END_TYPE, OB_END_NAME,"
+        + " EV_IDN_PLN, TM_DEF_START, TM_DEF_CREAT, LNK_DEF_IDN_E, STD_FORM, FL_SND)"
+        + " VALUES (@station, @trainNumber, @startObjType, @startObjName, @endObjType, @endObjName,"
+        + " @eventRecId, @execTime, @creationTime, @depEvRef, 2, @flSnd)";
         private const string UpdateExecTimeCmdText = "UPDATE TCOMDEFINITIONS"
-    + " SET TM_DEF_START = @execTime, FL_SND = 0"
+    + " SET TM_DEF_START = @execTime, SERVICE_FLAG = 1"
     + " WHERE DEF_IDN = @defIdn";
         private const string RemoveCmdText = "DELETE"
     + " FROM TCOMDEFINITIONS"
     + " WHERE DEF_IDN = @taskId";
         private readonly string _conString;
-    private readonly FbCommand _selectCmd;
-    private readonly FbCommand _insertCmd;
-    private readonly FbCommand _updateExecTimeCmd;
+        private readonly FbCommand _selectCmd;
+        private readonly FbCommand _insertCmd;
+        private readonly FbCommand _updateExecTimeCmd;
         private readonly FbCommand _removeCmd;
 
         private readonly FbParameter _parStation;
-    private readonly FbParameter _parTrainNumber;
-    private readonly FbParameter _parStartObjType;
-    private readonly FbParameter _parStartObjName;
-    private readonly FbParameter _parEndObjType;
-    private readonly FbParameter _parEndObjName;
-    private readonly FbParameter _parEventRecId;
-    private readonly FbParameter _parExecTime;
-    private readonly FbParameter _parCreationTime;
-    private readonly FbParameter _parDepEvRef;
-    private readonly FbParameter _parSndFlag;
+        private readonly FbParameter _parTrainNumber;
+        private readonly FbParameter _parStartObjType;
+        private readonly FbParameter _parStartObjName;
+        private readonly FbParameter _parEndObjType;
+        private readonly FbParameter _parEndObjName;
+        private readonly FbParameter _parEventRecId;
+        private readonly FbParameter _parExecTime;
+        private readonly FbParameter _parCreationTime;
+        private readonly FbParameter _parDepEvRef;
+        private readonly FbParameter _parSndFlag;
 
         private readonly FbParameter _parExecTimeUpdate;
         private readonly FbParameter _parDefIdnUpdate;
@@ -86,29 +87,32 @@ namespace BCh.KTC.TttDal {
         }
 
 
-    public void InsertTtTask(TtTaskRecord task) {
-      using (var con = new FbConnection(_conString)) {
-        con.Open();
-        using (var tx = con.BeginTransaction()) {
-          _insertCmd.Connection = con;
-          _insertCmd.Transaction = tx;
+        public void InsertTtTask(TtTaskRecord task)
+        {
+            using (var con = new FbConnection(_conString))
+            {
+                con.Open();
+                using (var tx = con.BeginTransaction())
+                {
+                    _insertCmd.Connection = con;
+                    _insertCmd.Transaction = tx;
 
-          _parStation.Value = int.Parse(task.Station);
-          _parTrainNumber.Value = task.TrainNumber;
-          _parStartObjType.Value = task.RouteStartObjectType;
-          _parStartObjName.Value = task.RouteStartObjectName;
-          _parEndObjType.Value = task.RouteEndObjectType;
-          _parEndObjName.Value = task.RouteEndObjectName;
-          _parEventRecId.Value = task.PlannedEventReference;
-          _parExecTime.Value = task.ExecutionTime;
-          _parCreationTime.Value = task.CreationTime;
-          _parDepEvRef.Value = task.DependencyEventReference;
-          _parSndFlag.Value = task.SentFlag;
-          _insertCmd.ExecuteNonQuery();
-          tx.Commit();
+                    _parStation.Value = int.Parse(task.Station);
+                    _parTrainNumber.Value = task.TrainNumber;
+                    _parStartObjType.Value = task.RouteStartObjectType;
+                    _parStartObjName.Value = task.RouteStartObjectName;
+                    _parEndObjType.Value = task.RouteEndObjectType;
+                    _parEndObjName.Value = task.RouteEndObjectName;
+                    _parEventRecId.Value = task.PlannedEventReference;
+                    _parExecTime.Value = task.ExecutionTime;
+                    _parCreationTime.Value = task.CreationTime;
+                    _parDepEvRef.Value = task.DependencyEventReference;
+                    _parSndFlag.Value = task.SentFlag;
+                    _insertCmd.ExecuteNonQuery();
+                    tx.Commit();
+                }
+            }
         }
-      }
-    }
 
         public void RemoveTtTask(int taskId)
         {
@@ -145,37 +149,41 @@ namespace BCh.KTC.TttDal {
             }
         }
 
-        public List<TtTaskRecord> GetTtTasks() {
-      var retRecords = new List<TtTaskRecord>();
-      using (var con = new FbConnection(_conString)) {
-        con.Open();
-        _selectCmd.Connection = con;
-        using (var dr = _selectCmd.ExecuteReader()) {
-          while (dr.Read()) {
-            var record = new TtTaskRecord();
-            record.RecId = dr.GetInt32Safely(0);
-            record.Station = dr.GetStringSafely(1);
-            record.TrainPrefix = dr.GetStringSafely(2);
-            record.TrainNumber = dr.GetStringSafely(3);
-            record.TrainSuffix = dr.GetStringSafely(4);
-            record.RouteStartObjectType = dr.GetInt16Safely(5);
-            record.RouteStartObjectName = dr.GetStringSafely(6);
-            record.RouteEndObjectType = dr.GetInt16Safely(7);
-            record.RouteEndObjectName = dr.GetStringSafely(8);
-            record.StopFlag = dr.GetInt16Safely(9);
-            //record.SelfLink = dr.GetInt32Safely(10);
-            record.DependencyEventReference = dr.GetInt32Safely(11);
-            record.PlannedEventReference = dr.GetInt32Safely(12);
-            record.ExecutionTime = dr.GetDateTime(13);
-            record.CreationTime = dr.GetDateTime(14);
-            record.FormationFlag = dr.GetInt16Safely(15);
-            record.SentFlag = dr.GetInt16Safely(16);
-            record.ExecutionCode = dr.GetStringSafely(17);
-            retRecords.Add(record);
-          }
+        public List<TtTaskRecord> GetTtTasks()
+        {
+            var retRecords = new List<TtTaskRecord>();
+            using (var con = new FbConnection(_conString))
+            {
+                con.Open();
+                _selectCmd.Connection = con;
+                using (var dr = _selectCmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        var record = new TtTaskRecord();
+                        record.RecId = dr.GetInt32Safely(0);
+                        record.Station = dr.GetStringSafely(1);
+                        record.TrainPrefix = dr.GetStringSafely(2);
+                        record.TrainNumber = dr.GetStringSafely(3);
+                        record.TrainSuffix = dr.GetStringSafely(4);
+                        record.RouteStartObjectType = dr.GetInt16Safely(5);
+                        record.RouteStartObjectName = dr.GetStringSafely(6);
+                        record.RouteEndObjectType = dr.GetInt16Safely(7);
+                        record.RouteEndObjectName = dr.GetStringSafely(8);
+                        record.StopFlag = dr.GetInt16Safely(9);
+                        //record.SelfLink = dr.GetInt32Safely(10);
+                        record.DependencyEventReference = dr.GetInt32Safely(11);
+                        record.PlannedEventReference = dr.GetInt32Safely(12);
+                        record.ExecutionTime = dr.GetDateTime(13);
+                        record.CreationTime = dr.GetDateTime(14);
+                        record.FormationFlag = dr.GetInt16Safely(15);
+                        record.SentFlag = dr.GetInt16Safely(16);
+                        record.ExecutionCode = dr.GetStringSafely(17);
+                        retRecords.Add(record);
+                    }
+                }
+                return retRecords;
+            }
         }
-        return retRecords;
-      }
     }
-  }
 }

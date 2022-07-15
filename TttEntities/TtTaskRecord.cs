@@ -21,6 +21,7 @@ namespace BCh.KTC.TttEntities
         public DateTime CreationTime { get; set; } // tm_def_creat
         public int FormationFlag { get; set; } // std_form
         public int SentFlag { get; set; } // fl_snd
+        public int ServiceFlag { get; set; }
         public string ExecutionCode { get; set; } // run_code
                                                   // ? chk_sm
 

@@ -155,7 +155,8 @@ namespace BCh.KTC.TttGenerator
             }
             // -1 checking already issued tasks
             var existingTask = FindIssuedTask(thread[index].RecId, tasks);
-            DateTime executionTime;
+            DateTime executionTime, lastAckEventOrBeginning;
+            TimeSpan deltaPlanExecuted;
             if (existingTask != null)
             {
                 int dependencyEventReferenceBuff = -1;
@@ -191,15 +192,16 @@ namespace BCh.KTC.TttGenerator
                     {
                         _logger.Debug("Not processing -0- command already issued. " + thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId)));// /*+ $"{((existingTask.SentFlag == 7) ? " command for autonom station - without doing." : string.Empty)}")*/;
                         //conversion execTime
-                        //if(existingTask.SentFlag != 5 && existingTask.SentFlag != 6)
-                        //{
-                        //    _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime);
-                        //    if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
-                        //    {
-                        //        _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
-                        //        _logger.Debug($"Update executionTime. New time - {executionTime.ToShortDateString()} {executionTime.ToShortTimeString()} - " + thread[index].ToString());
-                        //    }
-                        //}
+                        if (existingTask.SentFlag == 2)
+                        {
+                            Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning, out deltaPlanExecuted);
+                            _timeConstraintCalculator.HaveTimeConstraintsBeenPassed(thread, index, currentTime, out executionTime, deltaPlanExecuted);
+                            if (IsTimeDiffWithinDelta(executionTime, existingTask.ExecutionTime))
+                            {
+                                _taskRepo.UpdateExecTimeTask(executionTime, existingTask.RecId);
+                                _logger.Debug($"Update executionTime. New time - {executionTime.ToShortDateString()} {executionTime.ToShortTimeString()} - " + thread[index].ToString());
+                            }
+                        }
                         //
                         return;
                     }
@@ -215,8 +217,7 @@ namespace BCh.KTC.TttGenerator
             if (delElexistingTask != ReasonDeleteCommand.none)
                 return;
             // 0 (4)- is the thread identified (bound; are there any ack events)
-            DateTime lastAckEventOrBeginning;
-            TimeSpan deltaPlanExecuted;
+ 
             bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning, out deltaPlanExecuted);
 
             // 1.1 has prev task been executed?
