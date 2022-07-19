@@ -159,7 +159,7 @@ namespace BCh.KTC.TttGenerator
             TimeSpan deltaPlanExecuted;
             if (existingTask != null)
             {
-                int dependencyEventReferenceBuff = -1;
+                PlannedTrainRecord dependencyEventReferenceBuff = null;
                 bool arrivalToCrossingBuff;
                 if (delElexistingTask != ReasonDeleteCommand.none || !HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReferenceBuff, out arrivalToCrossingBuff))
                 {
@@ -258,7 +258,7 @@ namespace BCh.KTC.TttGenerator
                 return;
             }
             // 3 other train dependencies constraints
-            int dependencyEventReference;
+            PlannedTrainRecord dependencyEventReference = null;
             bool arrivalToCrossing;
             bool has3OtherTrainDependenciesPassed = HaveOtherTrainDependenciesBeenPasssed(allThreads, thread, index, out dependencyEventReference, out arrivalToCrossing);
             if (!has3OtherTrainDependenciesPassed)
@@ -272,7 +272,7 @@ namespace BCh.KTC.TttGenerator
                 && are4ThereAnyAckEvents
                 || (has2TimeConstraintsPassed
                     && has3OtherTrainDependenciesPassed
-                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId) && CheckPlannedTimeWithCurTime(thread[index])))
+                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId) && CheckPlannedTimeWithCurTime(thread[index], dependencyEventReference)))
             {
                 TtTaskRecord task = CreateTask(thread[index], (index > 0) ? thread[index - 1] : null, dependencyEventReference, executionTime);
                 //
@@ -294,12 +294,36 @@ namespace BCh.KTC.TttGenerator
             }
         }
 
-        private bool CheckPlannedTimeWithCurTime(PlannedTrainRecord plannedRecord)
+        private bool CheckPlannedTimeWithCurTime(PlannedTrainRecord plannedRecord, PlannedTrainRecord dependencyEvent)
         {
-            var result = plannedRecord.PlannedTime > DateTime.Now;
+            var addTime = new TimeSpan();
+            if(dependencyEvent != null)
+            {
+                var resDelta = CheckDeltaPlanExecuted(dependencyEvent);
+                if (resDelta.Item1 && resDelta.Item2.TotalSeconds > 0)
+                    addTime = resDelta.Item2;
+            }
+            var plannedTimePlus = plannedRecord.PlannedTime.Add(addTime);
+            var result = plannedTimePlus > DateTime.Now;
             if(!result)
-                _logger.Info($"Task -  {plannedRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedRecord.TrainId))} not write, because rope not tied and planned time < currentTime");
+                _logger.Info($"Task -  {plannedRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedRecord.TrainId))}+add time ({addTime.Hours}:{addTime.Minutes}:{addTime.Seconds})={plannedTimePlus.ToLongTimeString()}  not write, because rope not tied and planned time < currentTime.");
             return result;
+        }
+
+        private Tuple<bool, TimeSpan> CheckDeltaPlanExecuted(PlannedTrainRecord record)
+        {
+            if (_controlledStations.ContainsKey(record.Station))
+            {
+                if (!_controlledStations[record.Station].IsComparePlanWithPassed)
+                {
+                    if (!(record.EventType == 3 && record.NeighbourStationCode != record.Station))
+                        return new Tuple<bool, TimeSpan>(false, new TimeSpan());
+                }
+                //
+                 return new Tuple<bool, TimeSpan>(true, (record.ForecastTime - record.PlannedTime));
+            }
+            //
+            return new Tuple<bool, TimeSpan>(false, new TimeSpan());
         }
 
         private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
@@ -314,17 +338,23 @@ namespace BCh.KTC.TttGenerator
                 if (thread[i].AckEventFlag == 2)
                 {
                     result = true;
-                    if (_controlledStations.ContainsKey(thread[i].Station))
+                    var resDelta = CheckDeltaPlanExecuted(thread[i]);
+                    if(resDelta.Item1)
                     {
-                        if (!_controlledStations[thread[i].Station].IsComparePlanWithPassed)
-                        {
-                            if (!(thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station))
-                                continue;
-                        }
-                        //
-                        deltaPlanExecuted = (thread[i].ForecastTime - thread[i].PlannedTime);
+                        deltaPlanExecuted = resDelta.Item2;
                         break;
                     }
+                    //if (_controlledStations.ContainsKey(thread[i].Station))
+                    //{
+                    //    if (!_controlledStations[thread[i].Station].IsComparePlanWithPassed)
+                    //    {
+                    //        if (!(thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station))
+                    //            continue;
+                    //    }
+                    //    //
+                    //    deltaPlanExecuted = (thread[i].ForecastTime - thread[i].PlannedTime);
+                    //    break;
+                    //}
                 }
             }
             //
@@ -378,7 +408,7 @@ namespace BCh.KTC.TttGenerator
         //}
 
         private TtTaskRecord CreateTask(PlannedTrainRecord plannedTrainRecord, PlannedTrainRecord prevPlannedTrainRecord,
-            int dependecyEventReference,
+            PlannedTrainRecord dependecyEventReference,
             DateTime executionTime)
         {
             var task = new TtTaskRecord();
@@ -413,7 +443,7 @@ namespace BCh.KTC.TttGenerator
             task.CreationTime = DateTime.Now;
             task.ExecutionTime = executionTime;
             task.PlannedEventReference = plannedTrainRecord.RecId;
-            task.DependencyEventReference = dependecyEventReference;
+            task.DependencyEventReference = dependecyEventReference != null ? dependecyEventReference.RecId : -1;
             task.TrainNumber = string.IsNullOrEmpty(plannedTrainRecord.TrainNumber)?_trainHeadersRepo.GetTrainNumberByTrainId(plannedTrainRecord.TrainId): plannedTrainRecord.TrainNumber;
             return task;
         }
@@ -471,9 +501,9 @@ namespace BCh.KTC.TttGenerator
         }
 
         private bool HaveOtherTrainDependenciesBeenPasssed(List<PlannedTrainRecord[]> allThreads,
-            PlannedTrainRecord[] thread, int index, out int dependencyEventReference, out bool arrivalToCrossing)
+            PlannedTrainRecord[] thread, int index, out PlannedTrainRecord dependencyEventReference, out bool arrivalToCrossing)
         {
-            dependencyEventReference = -1;
+            dependencyEventReference = null;
             PlannedTrainRecord previousEvent = null;
             PlannedTrainRecord[] previousRope = null;
             var isCrossing = (_controlledStations.ContainsKey(thread[index].Station)) ? _controlledStations[thread[index].Station].IsCrossing : false;
@@ -537,14 +567,14 @@ namespace BCh.KTC.TttGenerator
             }
             else if (previousEvent.AckEventFlag != -1)
             {
-                dependencyEventReference = previousEvent.RecId;
+                dependencyEventReference = previousEvent;
                 return true;
             }
             else if (previousEvent.AckEventFlag == -1)
             {
                 if (IsOldDependenciesRope(previousRope))
                 {
-                    dependencyEventReference = -1;
+                    dependencyEventReference = null;
                     if (_trainHeadersRepo.DeletePlanRope(previousEvent.TrainId))
                         _logger.Info($"Task -  {thread[index].ToString(_trainHeadersRepo.GetTrainNumberByTrainId(thread[index].TrainId))} delete old rope {previousEvent.TrainId} tr:'{_trainHeadersRepo.GetTrainNumberByTrainId(previousEvent.TrainId)}'");
                     return true;
