@@ -280,10 +280,15 @@ namespace BCh.KTC.TttGenerator
                 //    task.SentFlag = 4;
                 if (arrivalToCrossing)
                     task.SentFlag = 4;
-                //only ron
-                var onlyRon = IsOnlyRonForStationEvent(thread[index]);
-                if (onlyRon)
-                    task.SentFlag = (thread[index].EventType != 3) ? 4 : 7;
+                else
+                {
+                    //only ron
+                    var onlyRon = IsOnlyRonForStationEvent(thread[index]);
+                    if (onlyRon)
+                        task.SentFlag = (thread[index].EventType != 3) ? 4 : 7;
+                    else if (thread[index].EventType == 3 && index == 0)
+                        task.SentFlag = 8;
+                }
                 //autonom station
                 var isAutonomous = IsAutonomousForStationEvent(thread, index);
                 if (isAutonomous)
