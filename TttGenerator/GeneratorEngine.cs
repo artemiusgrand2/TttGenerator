@@ -532,8 +532,8 @@ namespace BCh.KTC.TttGenerator
                         if (aThread[i].Station == thread[index].Station
                             && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo)
                             || IsСrossingTwoPaths(thread[index], aThread[i])
-                             /* ||
-                             (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))*/
+                              ||
+                             (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))
                              /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/))
                         {
                             eventFound = true;
