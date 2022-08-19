@@ -73,10 +73,14 @@ namespace BCh.KTC.TttGenerator
         private int GetIndexOfLastNotConfirmedRecord(PlannedTrainRecord[] thread)
         {
             int i = thread.Length;
+            var iCurTime = 0;
             while (i > 0)
             {
                 if (thread[i - 1].AckEventFlag == -1)
                 {
+                    if (thread[i - 1].StCurTime == 1 && iCurTime == 0)
+                        iCurTime = i;
+                    //
                     --i;
                     if (i == 0) break;
                 }
@@ -85,7 +89,7 @@ namespace BCh.KTC.TttGenerator
                     break;
                 }
             }
-            return i;
+            return i == 0 ? iCurTime : i;
         }
 
         private void ClearFalseMove(PlannedTrainRecord[] thread)

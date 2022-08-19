@@ -15,6 +15,8 @@ namespace BCh.KTC.TttEntities
         public string NeighbourStationCode { get; set; } // ev_ne_station
                                                          //? ev_flag
         public int AckEventFlag { get; set; } // ev_cnfm: 2 - the event has been acknoledged
+
+        public int StCurTime { get; set; }
         public int PlannedEventReference { get; set; } // lnke_rec_idn
         public int AutopilotState { get; set; } // fl_def
         public string TrainNumber { get; set; }
