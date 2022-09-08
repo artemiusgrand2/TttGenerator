@@ -73,14 +73,10 @@ namespace BCh.KTC.TttGenerator
         private int GetIndexOfLastNotConfirmedRecord(PlannedTrainRecord[] thread)
         {
             int i = thread.Length;
-            var iCurTime = 0;
             while (i > 0)
             {
                 if (thread[i - 1].AckEventFlag == -1)
                 {
-                    if (thread[i - 1].StCurTime == 1 && iCurTime == 0)
-                        iCurTime = i;
-                    //
                     --i;
                     if (i == 0) break;
                 }
@@ -89,7 +85,7 @@ namespace BCh.KTC.TttGenerator
                     break;
                 }
             }
-            return i == 0 ? iCurTime : i;
+            return  i;
         }
 
         private void ClearFalseMove(PlannedTrainRecord[] thread)
@@ -276,7 +272,7 @@ namespace BCh.KTC.TttGenerator
                 && are4ThereAnyAckEvents
                 || (has2TimeConstraintsPassed
                     && has3OtherTrainDependenciesPassed
-                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId) && CheckPlannedTimeWithCurTime(thread[index], dependencyEventReference)))
+                    && is6TaskGenAllowedForStationEvent && !_commandRepo.IsCommandBindPlanToTrain(thread[index].TrainId) /* && CheckPlannedTimeWithCurTime(thread[index], dependencyEventReference)*/))
             {
                 TtTaskRecord task = CreateTask(thread[index], (index > 0) ? thread[index - 1] : null, dependencyEventReference, executionTime);
                 //
@@ -303,21 +299,21 @@ namespace BCh.KTC.TttGenerator
             }
         }
 
-        private bool CheckPlannedTimeWithCurTime(PlannedTrainRecord plannedRecord, PlannedTrainRecord dependencyEvent)
-        {
-            var addTime = new TimeSpan();
-            if(dependencyEvent != null)
-            {
-                var resDelta = CheckDeltaPlanExecuted(dependencyEvent);
-                if (resDelta.Item1 && resDelta.Item2.TotalSeconds > 0)
-                    addTime = resDelta.Item2;
-            }
-            var plannedTimePlus = plannedRecord.PlannedTime.Add(addTime);
-            var result = plannedTimePlus > DateTime.Now;
-            if(!result)
-                _logger.Info($"Task -  {plannedRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedRecord.TrainId))}+add time ({addTime.Hours}:{addTime.Minutes}:{addTime.Seconds})={plannedTimePlus.ToLongTimeString()}  not write, because rope not tied and planned time < currentTime.");
-            return result;
-        }
+        //private bool CheckPlannedTimeWithCurTime(PlannedTrainRecord plannedRecord, PlannedTrainRecord dependencyEvent)
+        //{
+        //    var addTime = new TimeSpan();
+        //    if(dependencyEvent != null)
+        //    {
+        //        var resDelta = CheckDeltaPlanExecuted(dependencyEvent);
+        //        if (resDelta.Item1 && resDelta.Item2.TotalSeconds > 0)
+        //            addTime = resDelta.Item2;
+        //    }
+        //    var plannedTimePlus = plannedRecord.PlannedTime.Add(addTime);
+        //    var result = plannedTimePlus > DateTime.Now;
+        //    if(!result)
+        //        _logger.Info($"Task -  {plannedRecord.ToString(_trainHeadersRepo.GetTrainNumberByTrainId(plannedRecord.TrainId))}+add time ({addTime.Hours}:{addTime.Minutes}:{addTime.Seconds})={plannedTimePlus.ToLongTimeString()}  not write, because rope not tied and planned time < currentTime.");
+        //    return result;
+        //}
 
         private Tuple<bool, TimeSpan> CheckDeltaPlanExecuted(PlannedTrainRecord record)
         {

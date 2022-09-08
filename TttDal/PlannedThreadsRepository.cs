@@ -37,10 +37,10 @@ namespace BCh.KTC.TttDal
 
         private const string SelectForTttGenCmdTxt = "SELECT"
         + "    EV_REC_IDN, TRAIN_IDN, EV_TYPE, EV_TIME, EV_TIME_P,"
-        + "    EV_STATION, EV_AXIS, EV_NDO, EV_NE_STATION, EV_CNFM,"
-        + "    LNKE_REC_IDN, FL_DEF, ST_CUR_TIME"
+        + "    EV_STATION, EV_AXIS, EV_NDO, EV_NE_STATION, EV_CNFM"
+        + "    LNKE_REC_IDN, FL_DEF"
         + "    FROM TGRAPHICPL"
-        //    + "    WHERE EV_CNFM IS NULL "
+        + "    WHERE ST_CUR_TIME <> 1"
         + "    ORDER BY TRAIN_IDN, Ev_Rec_Idn";
         //+ "    ORDER BY TRAIN_IDN, EV_TIME_P";
 
@@ -180,8 +180,7 @@ namespace BCh.KTC.TttDal
                             Axis = dbReader.GetStringSafely(6),
                             Ndo = dbReader.GetStringSafely(7),
                             NeighbourStationCode = dbReader.GetStringSafely(8),
-                            AckEventFlag = dbReader.GetInt16Safely(9),
-                            StCurTime = dbReader.GetInt16SafelyOr0(12)
+                            AckEventFlag = dbReader.GetInt16Safely(9)
                             //PlannedEventReference { get; set; } // lnke_rec_idn
                             //AutopilotState { get; set; } // fl_def
                         };
