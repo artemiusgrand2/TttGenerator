@@ -604,7 +604,9 @@ namespace BCh.KTC.TttGenerator
             if(сurEvent.Ndo != checkEvent.Ndo && сurEvent.NeighbourStationCode == checkEvent.NeighbourStationCode)
             {
                 if (GetViewParityObject(сurEvent.Axis, true) != GetViewParityObject(сurEvent.Ndo, false, checkEvent.Ndo) || GetViewParityObject(checkEvent.Axis, true) != GetViewParityObject(checkEvent.Ndo, false, сurEvent.Ndo))
-                    return true;
+                {
+                    return !_controlledStations[сurEvent.Station].ListAxisEqualsForNumberAndDifDir.Contains(сurEvent.Axis) && !_controlledStations[checkEvent.Station].ListAxisEqualsForNumberAndDifDir.Contains(checkEvent.Axis);
+                }
             }
             //
             return false;
