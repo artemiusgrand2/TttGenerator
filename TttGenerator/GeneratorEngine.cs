@@ -218,7 +218,7 @@ namespace BCh.KTC.TttGenerator
                 return;
             // 0 (4)- is the thread identified (bound; are there any ack events)
  
-            bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning, out deltaPlanExecuted);
+            bool are4ThereAnyAckEvents = Are4ThereAnyAckEvents(thread, out lastAckEventOrBeginning, out deltaPlanExecuted).Item1;
 
             // 1.1 has prev task been executed?
             bool has11PrevTaskBeenExecuted = false;
@@ -331,39 +331,38 @@ namespace BCh.KTC.TttGenerator
             return new Tuple<bool, TimeSpan>(false, new TimeSpan());
         }
 
-        private bool Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
+        private Tuple<bool, bool> Are4ThereAnyAckEvents(PlannedTrainRecord[] thread, out DateTime lastAckEventOrBeginning, out TimeSpan deltaPlanExecuted)
         {
             lastAckEventOrBeginning = new DateTime();
             deltaPlanExecuted = new TimeSpan();
-            var result = false;
+            bool result = false, isLastEventAck = false;
+            int numberFirstControlledStations = -1;
             for (int i = thread.Length - 1; i >= 0; --i)
             {
                 if (!result)
                     lastAckEventOrBeginning = thread[i].ForecastTime;
+                //
+                if (numberFirstControlledStations == -1 && _controlledStations.ContainsKey(thread[i].Station))
+                    numberFirstControlledStations = i;
+                //
                 if (thread[i].AckEventFlag == 2)
                 {
-                    result = true;
+                    if (!result)
+                    {
+                        result = true;
+                        isLastEventAck = (i == thread.Length - 1) || (i == numberFirstControlledStations);
+                    }
+                    //
                     var resDelta = CheckDeltaPlanExecuted(thread[i]);
                     if(resDelta.Item1)
                     {
                         deltaPlanExecuted = resDelta.Item2;
                         break;
                     }
-                    //if (_controlledStations.ContainsKey(thread[i].Station))
-                    //{
-                    //    if (!_controlledStations[thread[i].Station].IsComparePlanWithPassed)
-                    //    {
-                    //        if (!(thread[i].EventType == 3 && thread[i].NeighbourStationCode != thread[i].Station))
-                    //            continue;
-                    //    }
-                    //    //
-                    //    deltaPlanExecuted = (thread[i].ForecastTime - thread[i].PlannedTime);
-                    //    break;
-                    //}
                 }
             }
             //
-            return result;
+            return new Tuple<bool, bool>(result, isLastEventAck);
         }
 
         private bool IsTaskGenAllowedForStationEvent(PlannedTrainRecord[] threads, int index)
@@ -596,7 +595,8 @@ namespace BCh.KTC.TttGenerator
             DateTime lastAckEventOrBeginning;
             TimeSpan deltaPlanExecuted;
             //
-            return (DateTime.Now >= (Are4ThereAnyAckEvents(rope, out lastAckEventOrBeginning, out deltaPlanExecuted) ? rope[rope.Length - 1].GetForecastTime2(deltaPlanExecuted) : rope[rope.Length - 1].PlannedTime));
+            var res = Are4ThereAnyAckEvents(rope, out lastAckEventOrBeginning, out deltaPlanExecuted);
+            return  res.Item1 ? (res.Item2 && DateTime.Now >= rope[rope.Length - 1].GetForecastTime2(deltaPlanExecuted)) : DateTime.Now >= rope[rope.Length - 1].PlannedTime;
         }
 
         private bool IsСrossingTwoPaths(PlannedTrainRecord сurEvent, PlannedTrainRecord checkEvent)
