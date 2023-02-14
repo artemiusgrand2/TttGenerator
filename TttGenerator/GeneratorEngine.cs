@@ -145,14 +145,14 @@ namespace BCh.KTC.TttGenerator
                 return;
             }
             //
-            if(thread[index].EventType == 3 && _controlledStations[thread[index].Station].ListStNotDep.Contains(thread[index].NeighbourStationCode))
-            {
-                if (++index < thread.Length)
-                {
-                    ProcessThread(allThreads, thread, index, tasks, currentTime, ref delElexistingTask);
-                }
-                return;
-            }
+            //if(thread[index].EventType == 3 && _controlledStations[thread[index].Station].ListStNotDep.Contains(thread[index].NeighbourStationCode))
+            //{
+            //    if (++index < thread.Length)
+            //    {
+            //        ProcessThread(allThreads, thread, index, tasks, currentTime, ref delElexistingTask);
+            //    }
+            //    return;
+            //}
             // -1 checking already issued tasks
             var existingTask = FindIssuedTask(thread[index].RecId, tasks);
             DateTime executionTime, lastAckEventOrBeginning;
@@ -278,21 +278,19 @@ namespace BCh.KTC.TttGenerator
                 //
                 //if (IsRepeatCompletedTask(task, tasks))
                 //    task.SentFlag = 4;
-                if (arrivalToCrossing)
+                var isAutonomous = IsAutonomousForStationEvent(thread, index);
+                if (arrivalToCrossing || isAutonomous ||
+                    (thread[index].EventType == 3 && _controlledStations[thread[index].Station].ListStNotDep.Contains(thread[index].NeighbourStationCode)))
                     task.SentFlag = 4;
                 else
                 {
                     //only ron
-                    var onlyRon = IsOnlyRonForStationEvent(thread[index]);
-                    if (onlyRon)
+                    if (IsOnlyRonForStationEvent(thread[index]))
                         task.SentFlag = (thread[index].EventType != 3) ? 4 : 7;
                     else if (thread[index].EventType == 3 && index == 0)
                         task.SentFlag = 8;
                 }
-                //autonom station
-                var isAutonomous = IsAutonomousForStationEvent(thread, index);
-                if (isAutonomous)
-                    task.SentFlag = 4;
+                //
                 _logger.Info($"Task created for tr:'{task.TrainNumber}': {task.PlannedEventReference} - {task.Station}, {task.RouteStartObjectType}:{task.RouteStartObjectName}, {task.RouteEndObjectType}:{task.RouteEndObjectName}" + $"{((isAutonomous) ? " command for autonom station - without doing." : string.Empty)}");
                 _taskRepo.InsertTtTask(task);
                 _logger.Info("The task has been written to the database.");
