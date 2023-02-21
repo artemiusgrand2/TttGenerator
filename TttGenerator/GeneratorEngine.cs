@@ -315,15 +315,16 @@ namespace BCh.KTC.TttGenerator
 
         private Tuple<bool, TimeSpan> CheckDeltaPlanExecuted(PlannedTrainRecord record)
         {
-            if (_controlledStations.ContainsKey(record.Station))
+            ControlledStation station;
+            if (_controlledStations.TryGetValue(record.Station, out station))
             {
-                if (!_controlledStations[record.Station].IsComparePlanWithPassed)
+                if (!station.IsComparePlanWithPassed)
                 {
                     if (!(record.EventType == 3 && record.NeighbourStationCode != record.Station))
                         return new Tuple<bool, TimeSpan>(false, new TimeSpan());
                 }
                 //
-                 return new Tuple<bool, TimeSpan>(true, (record.ForecastTime - record.PlannedTime));
+                return new Tuple<bool, TimeSpan>(true, (record.ForecastTime - record.PlannedTime));
             }
             //
             return new Tuple<bool, TimeSpan>(false, new TimeSpan());
@@ -479,18 +480,18 @@ namespace BCh.KTC.TttGenerator
             }
             else
             {
-                if (name1.ToUpper().IndexOf("Ч") != -1)
+                if (name1.IndexOf("Ч", StringComparison.OrdinalIgnoreCase) != -1)
                 {
-                    if (!string.IsNullOrEmpty(name2) && name2.ToUpper().IndexOf("Н") == -1 && Regex.IsMatch(name1.ToUpper(), @"Ч[А-Я]"))
+                    if (!string.IsNullOrEmpty(name2) && name2.IndexOf("Н", StringComparison.OrdinalIgnoreCase) == -1 && Regex.IsMatch(name1, @"Ч[А-Я]", RegexOptions.IgnoreCase))
                         return ViewParity.odd;
                     else
                         return ViewParity.even;
                 }
 
                 //
-                if (name1.ToUpper().IndexOf("Н") != -1)
+                if (name1.IndexOf("Н", StringComparison.OrdinalIgnoreCase) != -1)
                 {
-                    if (!string.IsNullOrEmpty(name2) && name2.ToUpper().IndexOf("Ч") == -1 && Regex.IsMatch(name1.ToUpper(), @"Н[А-Я]"))
+                    if (!string.IsNullOrEmpty(name2) && name2.IndexOf("Ч", StringComparison.OrdinalIgnoreCase) == -1 && Regex.IsMatch(name1, @"Н[А-Я]", RegexOptions.IgnoreCase))
                         return ViewParity.even;
                     else
                         return ViewParity.odd;
@@ -530,7 +531,7 @@ namespace BCh.KTC.TttGenerator
                             && ((aThread[i].EventType == 2 && aThread[i].Ndo == thread[index].Ndo)
                             || IsСrossingTwoPaths(thread[index], aThread[i])
                               ||
-                             (aThread[i].EventType == 3 && aThread[i].Ndo == thread[index].Ndo && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))
+                             (aThread[i].EventType == 3 && (aThread[i].Ndo == thread[index].Ndo || aThread[i].Axis == thread[index].Axis) && ((index == 0) || (index > 0 && (!_controlledStations.ContainsKey(thread[index-1].Station)))))
                              /* || (aThread[i].EventType == 3 && aThread[i].Axis == thread[index].Axis)*/))
                         {
                             eventFound = true;
